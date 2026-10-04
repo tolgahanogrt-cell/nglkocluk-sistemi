@@ -10,16 +10,47 @@ class ChartManager {
     }
   }
 
-  // TYT Net Gelişim Çizgi Grafiği
+  // Tarih Filtresi Yardımcısı (Genel / Aylık)
+  static filterByPeriod(items, period, dateField = "date") {
+    if (!items || items.length === 0) return [];
+    if (!period || period === "all") return items;
+
+    let maxDate = null;
+    items.forEach(item => {
+      if (item && item[dateField]) {
+        const d = new Date(item[dateField]);
+        if (!isNaN(d.getTime())) {
+          if (!maxDate || d > maxDate) maxDate = d;
+        }
+      }
+    });
+
+    if (!maxDate) return items;
+
+    const cutoff = new Date(maxDate);
+    cutoff.setDate(cutoff.getDate() - 30);
+
+    const filtered = items.filter(item => {
+      if (!item || !item[dateField]) return false;
+      const d = new Date(item[dateField]);
+      return !isNaN(d.getTime()) && d >= cutoff;
+    });
+
+    return filtered.length > 0 ? filtered : items.slice(-3);
+  }
+
   // TYT Net Gelişim Çizgi Grafiği (Tüm TYT Dersleri Dahil)
-  static renderTytChart(canvasId, exams, targetNet) {
+  static renderTytChart(canvasId, exams, targetNet, period = null) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    const tytExams = (exams || []).filter(e => e.type === "TYT");
+    const currentPeriod = period || document.getElementById("tytPeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const allTyt = (exams || []).filter(e => e.type === "TYT");
+    const tytExams = this.filterByPeriod(allTyt, currentPeriod);
+
     if (tytExams.length === 0) {
-      this.renderEmptyState(canvasId, "Henüz TYT deneme verisi girilmedi.");
+      this.renderEmptyState(canvasId, "Seçili dönemde TYT deneme verisi bulunmuyor.");
       return;
     }
 
@@ -144,14 +175,17 @@ class ChartManager {
   }
 
   // AYT Net Gelişim Çizgi Grafiği
-  static renderAytChart(canvasId, exams, targetNet, field = "Sayısal") {
+  static renderAytChart(canvasId, exams, targetNet, field = "Sayısal", period = null) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    const aytExams = (exams || []).filter(e => e.type === "AYT");
+    const currentPeriod = period || document.getElementById("aytPeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const allAyt = (exams || []).filter(e => e.type === "AYT");
+    const aytExams = this.filterByPeriod(allAyt, currentPeriod);
+
     if (aytExams.length === 0) {
-      this.renderEmptyState(canvasId, "Henüz AYT deneme verisi girilmedi.");
+      this.renderEmptyState(canvasId, "Seçili dönemde AYT deneme verisi bulunmuyor.");
       return;
     }
 
@@ -373,14 +407,18 @@ class ChartManager {
   }
 
   // Ders Bazlı Dağılım Radar / Bar Grafiği
-  static renderSubjectRadar(canvasId, student) {
+  static renderSubjectRadar(canvasId, student, period = null) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    const lastTyt = [...(student.exams || [])].filter(e => e.type === "TYT").pop();
+    const currentPeriod = period || document.getElementById("radarPeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const allTyt = (student.exams || []).filter(e => e.type === "TYT");
+    const filteredTyt = this.filterByPeriod(allTyt, currentPeriod);
+
+    const lastTyt = [...filteredTyt].pop();
     if (!lastTyt || !lastTyt.tyt) {
-      this.renderEmptyState(canvasId, "Ders dağılımı için TYT denemesi bulunamadı.");
+      this.renderEmptyState(canvasId, "Seçili dönemde TYT denemesi bulunamadı.");
       return;
     }
 
@@ -436,14 +474,18 @@ class ChartManager {
   }
 
   // AYT Branş Başarı Dağılımı Radar Grafiği
-  static renderAytSubjectRadar(canvasId, student) {
+  static renderAytSubjectRadar(canvasId, student, period = null) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    const lastAyt = [...(student.exams || [])].filter(e => e.type === "AYT").pop();
+    const currentPeriod = period || document.getElementById("aytRadarPeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const allAyt = (student.exams || []).filter(e => e.type === "AYT");
+    const filteredAyt = this.filterByPeriod(allAyt, currentPeriod);
+
+    const lastAyt = [...filteredAyt].pop();
     if (!lastAyt || !lastAyt.ayt) {
-      this.renderEmptyState(canvasId, "Ders dağılımı için AYT denemesi bulunamadı.");
+      this.renderEmptyState(canvasId, "Seçili dönemde AYT denemesi bulunamadı.");
       return;
     }
 
@@ -513,19 +555,22 @@ class ChartManager {
   }
 
   // Haftalık Soru Çözüm Dağılımı (Bar Chart)
-  static renderWeeklyQuestionsChart(canvasId, questionLogs) {
+  static renderWeeklyQuestionsChart(canvasId, questionLogs, period = null) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    if (!questionLogs || questionLogs.length === 0) {
-      this.renderEmptyState(canvasId, "Soru çözüm verisi bulunamadı.");
+    const currentPeriod = period || document.getElementById("questionsPeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const logs = this.filterByPeriod(questionLogs || [], currentPeriod);
+
+    if (!logs || logs.length === 0) {
+      this.renderEmptyState(canvasId, "Seçili dönemde soru çözüm verisi bulunamadı.");
       return;
     }
 
     // Ders bazlı soru sayılarını topla
     const subjectMap = {};
-    questionLogs.forEach(l => {
+    logs.forEach(l => {
       const sub = l.subject || "Diğer";
       subjectMap[sub] = (subjectMap[sub] || 0) + (Number(l.count) || 0);
     });
@@ -566,6 +611,78 @@ class ChartManager {
           y: {
             beginAtZero: true,
             grid: { color: "rgba(150, 150, 150, 0.1)" }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Ders Devamsızlık Dağılımı (Saat) Bar Grafiği
+  static renderAttendanceChart(canvasId, courseAttendance, period = null) {
+    this.destroyChart(canvasId);
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const currentPeriod = period || document.getElementById("attendancePeriodSelect")?.value || document.getElementById("filterDashboardPeriod")?.value || "all";
+    const records = this.filterByPeriod(courseAttendance || [], currentPeriod);
+
+    let ozursuz = 0;
+    let ozurlu = 0;
+    let izinli = 0;
+
+    records.forEach(r => {
+      const h = Number(r.hours) || 0;
+      const t = (r.type || "").toLowerCase();
+      if (t.includes("özürsüz") || t.includes("ozursuz") || t.includes("mazeretsiz")) {
+        ozursuz += h;
+      } else if (t.includes("özürlü") || t.includes("rapor") || t.includes("sevk")) {
+        ozurlu += h;
+      } else {
+        izinli += h;
+      }
+    });
+
+    const totalHours = ozursuz + ozurlu + izinli;
+    if (totalHours === 0) {
+      this.renderEmptyState(canvasId, "Kayıtlı devamsızlık bulunmuyor (Tam Devam).");
+      return;
+    }
+
+    const labels = ["Özürsüz", "Özürlü / Raporlu", "İzinli / Görevli"];
+    const dataValues = [ozursuz, ozurlu, izinli];
+
+    this.instances[canvasId] = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Devamsızlık (Ders Saati)",
+            data: dataValues,
+            backgroundColor: ["#ef4444", "#f59e0b", "#0284c7"],
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => ` ${context.parsed.y} Saat Devamsızlık`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(150, 150, 150, 0.1)" },
+            ticks: { stepSize: 2 }
           },
           x: {
             grid: { display: false }
