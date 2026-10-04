@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4.4">
+  <link rel="stylesheet" href="css/style.css?v=4.5">
 </head>
 <body>
 
@@ -233,7 +233,10 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Görevi *</label>
-                  <input type="text" id="profileTitle" class="form-input" required>
+                  <select id="profileTitle" class="form-select" required>
+                    <option value="Müdür Yardımcısı">Müdür Yardımcısı</option>
+                    <option value="Müdür">Müdür</option>
+                  </select>
                 </div>
               </div>
               <div class="form-grid" style="margin-bottom: 16px;">
@@ -622,7 +625,7 @@
         <div class="card">
           <div class="card-header">
             <h3>Kayıtlı Deneme Sınavları</h3>
-            <button class="btn btn-primary btn-sm teacher-only" id="btnOpenNewExamModal">+ Yeni Deneme Sınavı Ekle</button>
+            <button class="btn btn-primary btn-sm teacher-and-admin-only" id="btnOpenNewExamModal">+ Yeni Deneme Sınavı Ekle</button>
           </div>
           <div class="card-body" style="padding: 0;">
             <div class="table-responsive">
@@ -637,7 +640,7 @@
                     <th>Toplam Net</th>
                     <th>Tahmini Puan</th>
                     <th>Gözlem Notu</th>
-                    <th class="teacher-only">İşlem</th>
+                    <th class="teacher-and-admin-only" style="text-align:center; min-width:145px;">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody id="examsTableBody">
@@ -690,7 +693,7 @@
                     <th>Yanlış</th>
                     <th>Başarı (%)</th>
                     <th>Süre (Dk)</th>
-                    <th class="teacher-only">İşlem</th>
+                    <th style="text-align:center; min-width:145px;">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody id="questionsTableBody">
@@ -711,7 +714,7 @@
               <h3>Ders Devamsızlıkları (Okul ve Etüt Takibi)</h3>
               <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Öğrencinin derslere devam durumu ve mazeret kayıtları</p>
             </div>
-            <button class="btn btn-primary btn-sm teacher-only" id="btnOpenBulkCourseAttendanceModal">+ Takvimden Toplu Devamsızlık Ekle</button>
+            <button class="btn btn-primary btn-sm teacher-and-admin-only" id="btnOpenBulkCourseAttendanceModal">+ Takvimden Toplu Devamsızlık Ekle</button>
           </div>
           <div class="card-body" style="padding: 0;">
             <div class="table-responsive">
@@ -722,7 +725,7 @@
                     <th>Devamsızlık Türü</th>
                     <th>Ders Saati</th>
                     <th>Açıklama / Mazeret</th>
-                    <th class="teacher-only">İşlem</th>
+                    <th class="teacher-and-admin-only" style="text-align:center; min-width:145px;">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody id="courseAttendanceTableBody">
@@ -740,7 +743,7 @@
               <h3>Koçluk Görüşmeleri ve Bireysel Seanslar</h3>
               <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Haftalık koçluk görüşmelerine katılım ve verilen ödevler</p>
             </div>
-            <button class="btn btn-secondary btn-sm teacher-only" id="btnOpenNewSessionModal">+ Yeni Koçluk Seansı Ekle</button>
+            <button class="btn btn-secondary btn-sm teacher-and-admin-only" id="btnOpenNewSessionModal">+ Yeni Koçluk Seansı Ekle</button>
           </div>
           <div class="card-body">
             <div id="coachingSessionsContainer">
@@ -1514,10 +1517,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=4.4"></script>
-  <script src="js/store.js?v=4.4"></script>
-  <script src="js/analytics.js?v=4.4"></script>
-  <script src="js/charts.js?v=4.4"></script>
-  <script src="js/app.js?v=4.4"></script>
+  <script src="js/models.js?v=4.5"></script>
+  <script src="js/store.js?v=4.5"></script>
+  <script src="js/analytics.js?v=4.5"></script>
+  <script src="js/charts.js?v=4.5"></script>
+  <script src="js/app.js?v=4.5"></script>
 </body>
 </html>
