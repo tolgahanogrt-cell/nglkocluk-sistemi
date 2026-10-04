@@ -564,7 +564,7 @@ class App {
     const exists = filtered.some(s => s.id === activeId);
     if (!exists) {
       activeId = filtered[0].id;
-      window.store.activeStudentId = activeId;
+      window.store.setActiveStudent(activeId);
     }
 
     // SADECE ÖĞRENCİNİN ADI görünsün!
