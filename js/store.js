@@ -7,9 +7,16 @@ class AppStore {
     this.data = this.loadFromStorage();
     this.authRole = sessionStorage.getItem("kocluk_auth_role") || null; // 'admin' | 'teacher' | 'student'
     this.currentUser = JSON.parse(sessionStorage.getItem("kocluk_auth_user") || "null");
-    this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : "ALL");
-    this.filterGrade = "";
-    this.filterSection = "";
+    this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : null);
+    const initialStudent = (this.data.students || []).find(s => s.id === this.activeStudentId) || (this.data.students || [])[0];
+    if (initialStudent) {
+      this.filterGrade = initialStudent.grade ? initialStudent.grade.replace(/[^\d]/g, "") : "12";
+      this.filterSection = initialStudent.section || "A";
+      this.activeStudentId = initialStudent.id;
+    } else {
+      this.filterGrade = "12";
+      this.filterSection = "A";
+    }
   }
 
   // --- Kimlik Doğrulama ve Giriş Metodları ---
@@ -226,20 +233,16 @@ class AppStore {
     this.filterSection = section || "";
   }
 
-  getFilteredStudents(gradeFilter = this.filterGrade, sectionFilter = this.filterSection, nameSearch = "") {
+  getFilteredStudents(gradeFilter = this.filterGrade, sectionFilter = this.filterSection) {
+    if (!gradeFilter || !sectionFilter) {
+      return [];
+    }
     const all = this.getStudents();
     return all.filter(s => {
-      if (gradeFilter) {
-        const sGrade = (s.grade || "").toLowerCase();
-        if (!sGrade.includes(gradeFilter.toLowerCase())) return false;
-      }
-      if (sectionFilter) {
-        const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
-        if (sSec && sSec.toUpperCase() !== sectionFilter.toUpperCase()) return false;
-      }
-      if (nameSearch) {
-        if (!s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
-      }
+      const sGrade = (s.grade || "").toLowerCase();
+      if (!sGrade.includes(gradeFilter.toLowerCase())) return false;
+      const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
+      if (sSec && sSec.toUpperCase() !== sectionFilter.toUpperCase()) return false;
       return true;
     });
   }
@@ -353,12 +356,28 @@ class AppStore {
       return all.find(s => s.id === this.currentUser.id) || all[0];
     }
 
-    if (this.activeStudentId && this.activeStudentId !== "ALL") {
-      const found = all.find(s => s.id === this.activeStudentId);
-      if (found) return found;
+    if (!this.filterGrade || !this.filterSection) {
+      return null;
     }
 
-    return this.getAggregateStudent(this.filterGrade, this.filterSection);
+    if (this.activeStudentId && this.activeStudentId !== "ALL") {
+      const found = all.find(s => s.id === this.activeStudentId);
+      if (found) {
+        const sGrade = (found.grade || "").toLowerCase();
+        const sSec = found.section || "";
+        if (sGrade.includes(this.filterGrade.toLowerCase()) && sSec.toUpperCase() === this.filterSection.toUpperCase()) {
+          return found;
+        }
+      }
+    }
+
+    const filtered = this.getFilteredStudents(this.filterGrade, this.filterSection);
+    if (filtered.length > 0) {
+      this.activeStudentId = filtered[0].id;
+      return filtered[0];
+    }
+
+    return null;
   }
 
   setActiveStudent(id) {
