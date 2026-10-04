@@ -5,7 +5,60 @@ class App {
     this.currentTab = "dashboard";
     this.initTheme();
     this.bindEvents();
+    this.checkAuth();
+  }
+
+  // --- Oturum & Yetki Kontrolü ---
+  checkAuth() {
+    const authWrapper = document.getElementById("authWrapper");
+    if (!window.store.isAuthenticated()) {
+      if (authWrapper) authWrapper.classList.remove("hidden");
+      this.populateLoginStudentSelect();
+      return;
+    }
+
+    if (authWrapper) authWrapper.classList.add("hidden");
+    this.applyRoleRestrictions();
     this.refreshAll();
+  }
+
+  applyRoleRestrictions() {
+    const role = window.store.getRole();
+    const roleBadge = document.getElementById("sidebarRoleBadge");
+    const studentSelect = document.getElementById("studentSelect");
+
+    if (role === "student") {
+      document.body.classList.add("role-student");
+      if (roleBadge) {
+        roleBadge.className = "user-role-badge badge-success";
+        roleBadge.textContent = "👤 Öğrenci Portalı";
+      }
+      if (studentSelect) {
+        studentSelect.disabled = true;
+      }
+    } else {
+      document.body.classList.remove("role-student");
+      if (roleBadge) {
+        roleBadge.className = "user-role-badge badge-primary";
+        roleBadge.textContent = "👑 Koç / Yönetici";
+      }
+      if (studentSelect) {
+        studentSelect.disabled = false;
+      }
+    }
+  }
+
+  populateLoginStudentSelect() {
+    const select = document.getElementById("loginStudentSelect");
+    if (!select) return;
+    select.innerHTML = "";
+    const students = window.store.getStudents();
+    students.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = `${s.name} (${s.grade} - ${s.field})`;
+      select.appendChild(opt);
+    });
   }
 
   // --- Tema Yönetimi ---
@@ -32,6 +85,57 @@ class App {
 
   // --- Olay Dinleyicileri ---
   bindEvents() {
+    // Auth Tab Değişimi (Koç vs Öğrenci)
+    document.getElementById("tabBtnCoach")?.addEventListener("click", () => {
+      document.getElementById("tabBtnCoach").classList.add("active");
+      document.getElementById("tabBtnStudent").classList.remove("active");
+      document.getElementById("formCoachLogin").style.display = "block";
+      document.getElementById("formStudentLogin").style.display = "none";
+    });
+
+    document.getElementById("tabBtnStudent")?.addEventListener("click", () => {
+      document.getElementById("tabBtnStudent").classList.add("active");
+      document.getElementById("tabBtnCoach").classList.remove("active");
+      document.getElementById("formStudentLogin").style.display = "block";
+      document.getElementById("formCoachLogin").style.display = "none";
+    });
+
+    // Koç Girişi Formu
+    document.getElementById("formCoachLogin")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById("coachPasswordInput").value;
+      const res = window.store.loginCoach(pwd);
+      if (res.success) {
+        this.checkAuth();
+        this.showToast("Koçluk yönetim paneline hoş geldiniz!", "success");
+      } else {
+        alert(res.message);
+      }
+    });
+
+    // Öğrenci Girişi Formu
+    document.getElementById("formStudentLogin")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const stdId = document.getElementById("loginStudentSelect").value;
+      const pin = document.getElementById("studentPinInput").value;
+      const res = window.store.loginStudent(stdId, pin);
+      if (res.success) {
+        this.checkAuth();
+        this.showToast(`Hoş geldin, ${res.student.name}!`, "success");
+      } else {
+        alert(res.message);
+      }
+    });
+
+    // Çıkış Yap Butonu
+    document.getElementById("btnLogout")?.addEventListener("click", () => {
+      if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
+        window.store.logout();
+        this.checkAuth();
+        this.showToast("Oturum kapatıldı.", "info");
+      }
+    });
+
     // Sekme Değişimi
     document.querySelectorAll(".sidebar-nav .nav-item").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -296,6 +400,8 @@ class App {
       return;
     }
 
+    const isCoach = window.store.getRole() !== "student";
+
     exams.forEach(ex => {
       let subjectSummary = "";
       if (ex.type === "TYT" && ex.tyt) {
@@ -315,6 +421,10 @@ class App {
       const badgeType = ex.type === "TYT" ? "badge-primary" : "badge-success";
       const stars = "⭐".repeat(ex.difficulty || 3);
 
+      const actionHtml = isCoach 
+        ? `<td><button class="btn btn-danger btn-sm" onclick="app.deleteExam('${ex.id}')">Sil</button></td>`
+        : `<td>-</td>`;
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${ex.date}</td>
@@ -325,9 +435,7 @@ class App {
         <td><strong style="color:var(--primary); font-size:14px;">${ex.totalNet} Net</strong></td>
         <td><span class="badge badge-outline">${ex.estimatedScore} Puan</span></td>
         <td style="font-size:12px; color:var(--text-muted);">${ex.notes || "-"}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="app.deleteExam('${ex.id}')">Sil</button>
-        </td>
+        ${actionHtml}
       `;
       tbody.appendChild(tr);
     });
@@ -351,10 +459,15 @@ class App {
       return;
     }
 
+    const isCoach = window.store.getRole() !== "student";
+
     logs.forEach(l => {
       const correct = Number(l.correct) || 0;
       const total = Number(l.count) || 0;
       const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const actionHtml = isCoach
+        ? `<td><button class="btn btn-danger btn-sm" onclick="app.deleteQuestionLog('${l.id}')">Sil</button></td>`
+        : `<td>-</td>`;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -365,9 +478,7 @@ class App {
         <td style="color:var(--danger); font-weight:600;">${l.wrong || 0}</td>
         <td><span class="badge ${rate >= 75 ? 'badge-success' : 'badge-warning'}">%${rate}</span></td>
         <td>${l.duration ? l.duration + ' Dk' : '-'}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="app.deleteQuestionLog('${l.id}')">Sil</button>
-        </td>
+        ${actionHtml}
       `;
       tbody.appendChild(tr);
     });
@@ -385,10 +496,16 @@ class App {
       return;
     }
 
+    const isCoach = window.store.getRole() !== "student";
+
     attendance.forEach(a => {
       let statusBadge = "badge-success";
       if (a.status === "İzinli") statusBadge = "badge-warning";
       else if (a.status === "Devamsız") statusBadge = "badge-danger";
+
+      const actionHtml = isCoach
+        ? `<td><button class="btn btn-danger btn-sm" onclick="app.deleteAttendance('${a.id}')">Sil</button></td>`
+        : `<td>-</td>`;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -397,9 +514,7 @@ class App {
         <td><span class="badge badge-outline">${a.type}</span></td>
         <td><span class="badge ${statusBadge}">${a.status}</span></td>
         <td style="font-size:12px; color:var(--text-muted);">${a.notes || "-"}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" onclick="app.deleteAttendance('${a.id}')">Sil</button>
-        </td>
+        ${actionHtml}
       `;
       tbody.appendChild(tr);
     });
