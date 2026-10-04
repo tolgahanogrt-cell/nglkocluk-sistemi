@@ -27,15 +27,35 @@ class AppStore {
 
   // 1. Sistem Yöneticisi Girişi
   loginAdmin(username, password) {
-    const admin = this.data.admin || { username: "admin", password: "123", name: "Sistem Yöneticisi" };
-    if (username === admin.username && password === admin.password) {
+    const admin = this.getAdminProfile();
+    const norm = (s) => String(s || "").trim().toLocaleLowerCase("tr");
+    if (norm(username) === norm(admin.username) && password === admin.password) {
       this.authRole = "admin";
-      this.currentUser = { role: "admin", name: admin.name, username: admin.username };
+      this.currentUser = { role: "admin", name: admin.name, username: admin.username, title: admin.title };
       sessionStorage.setItem("kocluk_auth_role", "admin");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
       return { success: true, user: this.currentUser };
     }
     return { success: false, message: "Yönetici kullanıcı adı veya şifresi hatalı!" };
+  }
+
+  getAdminProfile() {
+    return this.data.admin || { username: "aşen", password: "123456", name: "Aynur ŞEN", title: "Müdür Yardımcısı" };
+  }
+
+  updateAdminProfile({ username, name, title, password }) {
+    if (this.authRole !== "admin") return { success: false, message: "Yalnızca yönetici güncelleyebilir." };
+    const admin = this.getAdminProfile();
+    this.data.admin = {
+      username: username.trim() || admin.username,
+      name: name.trim() || admin.name,
+      title: title.trim() || admin.title,
+      password: password.trim() || admin.password
+    };
+    this.currentUser = { role: "admin", name: this.data.admin.name, username: this.data.admin.username, title: this.data.admin.title };
+    sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+    this.saveToStorage();
+    return { success: true, admin: this.data.admin };
   }
 
   // 2. Öğretmen / Koç Girişi
@@ -86,6 +106,9 @@ class AppStore {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (parsed && (!parsed.admin || !parsed.admin.title)) {
+          parsed.admin = JSON.parse(JSON.stringify(INITIAL_DEMO_DATA.admin));
+        }
         if (parsed && parsed.students) {
           parsed.students.forEach(s => {
             if (!s.section) {
