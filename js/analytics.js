@@ -1,4 +1,4 @@
-// Öğrenci Koçluk Sistemi - Analiz, İlerleme/Gerileme Motoru ve Akıllı Koç Önerileri
+// Öğrenci Koçluk Sistemi - Analiz, Gelişim Motoru ve Rehberlik Algoritması
 
 class AnalyticsEngine {
   // Net hesaplama: Doğru - (Yanlış / 4)
@@ -9,7 +9,7 @@ class AnalyticsEngine {
     return Math.max(0, Number(net.toFixed(2)));
   }
 
-  // Tahmini TYT Puanı (ÖSYM yaklaşık katsayıları: Taban 100 + Türkçe*3.3 + Mat*3.3 + Fen*3.4 + Sosyal*3.4)
+  // Tahmini TYT Puanı (ÖSYM yaklaşık standart katsayıları)
   static estimateTytScore(tytObj) {
     if (!tytObj) return 0;
     const base = 100;
@@ -43,13 +43,8 @@ class AnalyticsEngine {
       const edb = (aytObj.edebiyat?.net || 0) * 3.0;
       const tar1 = (aytObj.tarih1?.net || 0) * 2.8;
       const cog1 = (aytObj.cografya1?.net || 0) * 2.8;
-      const tar2 = (aytObj.tarih2?.net || 0) * 2.9;
-      const cog2 = (aytObj.cografya2?.net || 0) * 2.9;
-      const fel = (aytObj.felsefe?.net || 0) * 3.0;
-      const din = (aytObj.din?.net || 0) * 3.0;
-      score += edb + tar1 + cog1 + tar2 + cog2 + fel + din;
+      score += edb + tar1 + cog1;
     } else {
-      // Dil
       const dil = (aytObj.dil?.net || 0) * 3.0;
       score += dil;
     }
@@ -76,11 +71,10 @@ class AnalyticsEngine {
     const maxAyt = aytNets.length > 0 ? Math.max(...aytNets) : 0;
     const avgAyt = aytNets.length > 0 ? Number((aytNets.reduce((a, b) => a + b, 0) / aytNets.length).toFixed(2)) : 0;
 
-    // Soru Çözüm Metrikleri (Son 7 gün ve toplam)
+    // Soru Çözüm Metrikleri
     const logs = student.questionLogs || [];
     const totalQuestions = logs.reduce((sum, l) => sum + (Number(l.count) || 0), 0);
     const totalCorrect = logs.reduce((sum, l) => sum + (Number(l.correct) || 0), 0);
-    const totalWrong = logs.reduce((sum, l) => sum + (Number(l.wrong) || 0), 0);
     const accuracyRate = totalQuestions > 0 ? Number(((totalCorrect / totalQuestions) * 100).toFixed(1)) : 0;
 
     // Son 7 gün soruları
@@ -92,10 +86,15 @@ class AnalyticsEngine {
       ? Math.min(100, Math.round((weeklyQuestions / student.targetWeeklyQuestions) * 100))
       : 0;
 
-    // Devamsızlık Oranı
-    const attendance = student.attendance || [];
-    const attendedCount = attendance.filter(a => a.status === "Katıldı").length;
-    const attendanceRate = attendance.length > 0 ? Math.round((attendedCount / attendance.length) * 100) : 100;
+    // Ders Devamsızlıkları
+    const courseAttendance = student.courseAttendance || [];
+    const totalAbsentHours = courseAttendance.reduce((sum, a) => sum + (Number(a.hours) || 0), 0);
+    const totalAbsentDays = courseAttendance.length;
+
+    // Koçluk Görüşmeleri Katılımı
+    const sessions = student.coachingSessions || [];
+    const attendedSessions = sessions.filter(s => s.status === "Katıldı").length;
+    const sessionRate = sessions.length > 0 ? Math.round((attendedSessions / sessions.length) * 100) : 100;
 
     return {
       tytCount: tytExams.length,
@@ -112,13 +111,15 @@ class AnalyticsEngine {
       weeklyQuestions,
       weeklyProgressPct,
       accuracyRate,
-      attendanceRate,
-      attendanceTotal: attendance.length,
-      attendedCount
+      totalAbsentDays,
+      totalAbsentHours,
+      sessionRate,
+      sessionsTotal: sessions.length,
+      attendedSessions
     };
   }
 
-  // İlerleme & Gerileme Analiz Raporu
+  // Tamamen Dinamik İlerleme ve Gerileme Analiz Motoru
   static analyzeProgress(student) {
     if (!student || !student.exams || student.exams.length === 0) {
       return {
@@ -128,10 +129,9 @@ class AnalyticsEngine {
         trendAyt: "stabil",
         deltaTyt: 0,
         deltaAyt: 0,
-        details: ["Öğrencinin ilerleme analizini görebilmek için en az 2 deneme sınavı giriniz."],
         strengths: [],
         weaknesses: [],
-        recommendations: ["İlk deneme verilerini girerek koçluk yol haritasını başlatın."]
+        recommendations: ["Öğrencinin analizinin çıkarılması için en az 1 deneme sınavı giriniz."]
       };
     }
 
@@ -158,11 +158,11 @@ class AnalyticsEngine {
       else if (deltaAyt <= -2.5) trendAyt = "dusus";
     }
 
-    // Genel durum sınıflandırması
+    // Durum Belirleme Algoritması
     let status = "Dengeli ve Kararlı";
-    let statusType = "info"; // success, warning, danger, info
+    let statusType = "info";
     if (deltaTyt > 4 || deltaAyt > 3.5) {
-      status = "Belirgin İlerleme / Yükseliş Trendi";
+      status = "Belirgin İlerleme (Yükseliş Eğilimi)";
       statusType = "success";
     } else if (deltaTyt >= 1.5 || deltaAyt >= 1) {
       status = "Pozitif İlerleme";
@@ -171,14 +171,14 @@ class AnalyticsEngine {
       status = "Ciddi Gerileme Uyarısı (Acil Müdahale)";
       statusType = "danger";
     } else if (deltaTyt <= -1.5 || deltaAyt <= -1) {
-      status = "Hafif Düşüş / Dikkat Edilmeli";
+      status = "Hafif Düşüş (Takip Edilmeli)";
       statusType = "warning";
     }
 
-    // Ders bazlı güçlü ve zayıf alan tespiti
+    // Branş Başarı Oranları
     const { strengths, weaknesses } = this.detectSubjectPerformances(student);
 
-    // Otomatik Koç Tavsiyeleri Üretme
+    // Dinamik Aksiyon ve Tavsiye Üretimi
     const recommendations = this.generateCoachingAdvice(student, deltaTyt, deltaAyt, weaknesses, strengths);
 
     return {
@@ -194,7 +194,6 @@ class AnalyticsEngine {
     };
   }
 
-  // Ders bazlı güçlü / zayıf analizi
   static detectSubjectPerformances(student) {
     const strengths = [];
     const weaknesses = [];
@@ -202,25 +201,21 @@ class AnalyticsEngine {
     const lastTyt = [...(student.exams || [])].filter(e => e.type === "TYT").pop();
     if (lastTyt && lastTyt.tyt) {
       const tyt = lastTyt.tyt;
-      // Türkçe (40)
       if (tyt.turkce) {
         const rate = (tyt.turkce.net / 40) * 100;
         if (rate >= 80) strengths.push({ subject: "TYT Türkçe", net: tyt.turkce.net, rate: rate.toFixed(0) });
         else if (rate < 60) weaknesses.push({ subject: "TYT Türkçe", net: tyt.turkce.net, rate: rate.toFixed(0) });
       }
-      // Matematik (40)
       if (tyt.matematik) {
         const rate = (tyt.matematik.net / 40) * 100;
         if (rate >= 75) strengths.push({ subject: "TYT Matematik", net: tyt.matematik.net, rate: rate.toFixed(0) });
         else if (rate < 50) weaknesses.push({ subject: "TYT Matematik", net: tyt.matematik.net, rate: rate.toFixed(0) });
       }
-      // Sosyal (20)
       if (tyt.sosyal) {
         const rate = (tyt.sosyal.net / 20) * 100;
         if (rate >= 75) strengths.push({ subject: "TYT Sosyal", net: tyt.sosyal.net, rate: rate.toFixed(0) });
         else if (rate < 50) weaknesses.push({ subject: "TYT Sosyal", net: tyt.sosyal.net, rate: rate.toFixed(0) });
       }
-      // Fen (20)
       if (tyt.fen) {
         const rate = (tyt.fen.net / 20) * 100;
         if (rate >= 70) strengths.push({ subject: "TYT Fen", net: tyt.fen.net, rate: rate.toFixed(0) });
@@ -251,40 +246,44 @@ class AnalyticsEngine {
     return { strengths, weaknesses };
   }
 
-  // Koçluk tavsiyeleri oluşturucu
   static generateCoachingAdvice(student, deltaTyt, deltaAyt, weaknesses, strengths) {
     const advice = [];
     const stats = this.getStudentStats(student);
 
-    // TYT Değerlendirmesi
+    // 1. TYT Değerlendirmesi
     if (deltaTyt > 3) {
-      advice.push(`🚀 TYT'de son denemede +${deltaTyt} netlik harika bir artış yakalandı! Mevcut çalışma temposu ve deneme analiz rutini aynen korunmalı.`);
+      advice.push(`TYT sınavında son denemede +${deltaTyt} net artış kaydedildi. Öğrencinin deneme süresi dağılımı ve soru çözüm temposu korunmalıdır.`);
     } else if (deltaTyt < -3) {
-      advice.push(`⚠️ TYT son denemede ${deltaTyt} netlik bir gerileme görüldü. Hatalı soru analizi ve süre yönetimi (özellikle Türkçe-Matematik paylaşımı) acilen gözden geçirilmeli.`);
+      advice.push(`TYT son denemede ${deltaTyt} netlik gerileme gözlendi. Deneme analizinde boş bırakılan ve hatalı yapılan sorular konu bazında taranmalıdır.`);
     }
 
-    // AYT Değerlendirmesi
+    // 2. AYT Değerlendirmesi
     if (deltaAyt > 2) {
-      advice.push(`🎯 AYT'de +${deltaAyt} netlik pozitif ivme var. AYT puan katsayısının TYT'den daha yüksek olduğu vurgulanarak bu alandaki motivasyon desteklenmeli.`);
+      advice.push(`AYT denemesinde +${deltaAyt} netlik pozitif ivme mevcut. Alan katsayısı yüksek olduğundan çalışma programında bu ivme pekiştirilmelidir.`);
     } else if (deltaAyt < -2) {
-      advice.push(`🔍 AYT'de ${deltaAyt} netlik düşüş var. Konu eksiği olan alanlarda soru çözümünden önce 1-2 günlük konu fasikülü taraması önerilir.`);
+      advice.push(`AYT'de ${deltaAyt} netlik düşüş yaşandı. Konu eksikleri için soru bankası taramasından önce 2 günlük özet konu fasikülü tekrarı önerilir.`);
     }
 
-    // Soru Kotası Durumu
+    // 3. Haftalık Soru Kotası
     if (stats.weeklyProgressPct < 60) {
-      advice.push(`📉 Haftalık soru hedefi %${stats.weeklyProgressPct} seviyesinde kaldı. Günlük çözülmesi gereken soru sayısı parçalara bölünmeli (örn. sabah 50, akşam 100).`);
+      advice.push(`Haftalık soru çözme hedefinin %${stats.weeklyProgressPct} kadarı tamamlanabildi. Öğrenci için günlük kota parçalı hedeflere (sabah/akşam) bölünmelidir.`);
     } else if (stats.weeklyProgressPct >= 95) {
-      advice.push(`⭐ Haftalık soru hedefine tam ulaşıldı (%${stats.weeklyProgressPct}). Şimdi odak soru sayısından ziyade 'hata yapılan soruların tekrar çözümüne' çevrilmeli.`);
+      advice.push(`Haftalık soru tamamlama oranı %${stats.weeklyProgressPct} ile başarıyla gerçekleşti. Şimdi yanlış çıkan soru tiplerinin analizine odaklanılmalıdır.`);
     }
 
-    // Zayıf derslere özel yönlendirmeler
+    // 4. Devamsızlık Uyarısı
+    if (stats.totalAbsentDays > 3) {
+      advice.push(`Öğrencinin ${stats.totalAbsentDays} gün (${stats.totalAbsentHours} ders saati) devamsızlığı bulunuyor. Ders kaçırma durumunun deneme netlerine etkisi takip edilmelidir.`);
+    }
+
+    // 5. Zayıf Alan Odaklanması
     if (weaknesses.length > 0) {
-      const weakNames = weaknesses.map(w => w.subject).join(", ");
-      advice.push(`📌 Öncelikli Gelişim Alanı: ${weakNames} derslerinde başarı oranı düşük. Bir sonraki haftanın ödev programında bu derslere ağırlık verilmeli.`);
+      const names = weaknesses.map(w => w.subject).join(", ");
+      advice.push(`Öncelikli Gelişim İhtiyacı: ${names} derslerinde net yüzdesi düşük. Gelecek haftanın çalışma programında bu derslere ek branş etütleri planlanmalıdır.`);
     }
 
     if (advice.length === 0) {
-      advice.push("Düzenli deneme çözümü ve günlük soru hedeflerine uyum başarıyla devam ediyor. Koçluk görüşmesinde moral-motivasyon desteği sağlanmalıdır.");
+      advice.push("Öğrencinin haftalık çalışma rutini ve deneme performansı dengeli ilerlemektedir. Bir sonraki seansa kadar program aynı kararlılıkla sürdürülmelidir.");
     }
 
     return advice;
