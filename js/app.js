@@ -181,6 +181,7 @@ class App {
     document.querySelectorAll(".sidebar-nav .nav-item").forEach(btn => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
+        if (!tab) return;
         this.switchTab(tab);
       });
     });
@@ -549,16 +550,23 @@ class App {
       return;
     }
 
-    this.renderHeroCard(student);
-    this.renderKpis(student);
-    this.renderTasks(student);
-    this.renderExamsTable(student);
-    this.renderQuestionsTable(student);
-    this.renderCourseAttendanceTable(student);
-    this.renderCoachingSessions(student);
-    this.renderCharts();
-    this.renderAnalysisDetails();
-    this.renderKarne();
+    const safe = (fn) => { try { fn(); } catch (err) { console.error(err); } };
+    safe(() => this.renderHeroCard(student));
+    safe(() => this.renderKpis(student));
+    safe(() => this.renderTasks(student));
+    safe(() => this.renderExamsTable(student));
+    safe(() => this.renderQuestionsTable(student));
+    safe(() => this.renderCourseAttendanceTable(student));
+    safe(() => this.renderCoachingSessions(student));
+    safe(() => this.renderCharts());
+    safe(() => this.renderAnalysisDetails());
+    safe(() => this.renderKarne());
+
+    // Sayfa/sekme yerleşimi tamamlandıktan sonra grafikleri tekrar çiz (ilk girişte boyut 0 kalmasın)
+    if (this._chartRetry) cancelAnimationFrame(this._chartRetry);
+    this._chartRetry = requestAnimationFrame(() => {
+      setTimeout(() => safe(() => this.renderCharts()), 60);
+    });
   }
 
   renderStudentSelector() {
@@ -1092,12 +1100,13 @@ class App {
       return;
     }
 
-    ChartManager.renderTytChart("chartTytDashboard", student.exams, student.targetTytNet);
-    ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet, student.field);
-    ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", student.questionLogs);
-    ChartManager.renderSubjectRadar("chartRadarDashboard", student);
-    ChartManager.renderAytSubjectRadar("chartAytRadarDashboard", student);
-    ChartManager.renderAttendanceChart("chartAttendanceDashboard", student.courseAttendance);
+    const run = (fn) => { try { fn(); } catch (err) { console.error(err); } };
+    run(() => ChartManager.renderTytChart("chartTytDashboard", student.exams, student.targetTytNet));
+    run(() => ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet, student.field));
+    run(() => ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", student.questionLogs));
+    run(() => ChartManager.renderSubjectRadar("chartRadarDashboard", student));
+    run(() => ChartManager.renderAytSubjectRadar("chartAytRadarDashboard", student));
+    run(() => ChartManager.renderAttendanceChart("chartAttendanceDashboard", student.courseAttendance));
   }
 
   renderExamsTable(student) {
