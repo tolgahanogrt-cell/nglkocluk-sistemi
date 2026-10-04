@@ -106,6 +106,25 @@
           <span class="student-selector-title">Öğrenci Seçimi</span>
           <button class="btn btn-secondary btn-sm teacher-and-admin-only" id="btnOpenNewStudentModal" title="Yeni Öğrenci Ekle">+ Öğrenci</button>
         </div>
+        <!-- Sınıf ve Şube Seçimi (Önce Sınıf Sonra Şube) -->
+        <div class="sidebar-filter-row" style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <select id="sidebarGradeSelect" class="form-select" style="flex: 1; padding: 6px 6px; font-size: 11px; font-weight: 600;">
+            <option value="">Tüm Sınıflar</option>
+            <option value="12">12. Sınıf</option>
+            <option value="11">11. Sınıf</option>
+            <option value="10">10. Sınıf</option>
+            <option value="9">9. Sınıf</option>
+            <option value="Mezun">Mezun</option>
+          </select>
+          <select id="sidebarSectionSelect" class="form-select" style="flex: 1; padding: 6px 6px; font-size: 11px; font-weight: 600;">
+            <option value="">Tüm Şubeler</option>
+            <option value="A">A Şubesi</option>
+            <option value="B">B Şubesi</option>
+            <option value="C">C Şubesi</option>
+            <option value="D">D Şubesi</option>
+            <option value="E">E Şubesi</option>
+          </select>
+        </div>
         <select id="studentSelect" class="student-select">
           <!-- Dinamik doldurulacak -->
         </select>
@@ -113,12 +132,6 @@
 
       <!-- Menü Linkleri -->
       <nav class="sidebar-nav">
-        <!-- Yöneticiye Özel Sekme -->
-        <button class="nav-item admin-only" data-tab="admin">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Öğretmen Yönetimi
-        </button>
-
         <button class="nav-item active" data-tab="dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
           Genel Bakış
@@ -149,10 +162,16 @@
           Öğrenci Karnesi
         </button>
 
-        <!-- Öğretmen İçin Öğrenci Yönetimi Sekmesi (En Sonda) -->
+        <!-- Öğretmen İçin Öğrenci Yönetimi Sekmesi -->
         <button class="nav-item teacher-only" data-tab="students">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Öğrenci Yönetimi
+        </button>
+
+        <!-- Yöneticiye Özel Sekme (En Altta) -->
+        <button class="nav-item admin-only" data-tab="admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Öğretmen Yönetimi
         </button>
       </nav>
 
@@ -881,8 +900,21 @@
               <input type="text" id="tName" class="form-input" required placeholder="Örn: Ahmet Yılmaz">
             </div>
             <div class="form-group">
-              <label class="form-label">Branşı</label>
-              <input type="text" id="tBranch" class="form-input" placeholder="Matematik, Fizik, Rehberlik...">
+              <label class="form-label">Branşı *</label>
+              <select id="tBranch" class="form-select" required>
+                <option value="Rehberlik ve Psikolojik Danışmanlık">Rehberlik ve Psikolojik Danışmanlık</option>
+                <option value="Matematik">Matematik</option>
+                <option value="Fizik">Fizik</option>
+                <option value="Kimya">Kimya</option>
+                <option value="Biyoloji">Biyoloji</option>
+                <option value="Türk Dili ve Edebiyatı">Türk Dili ve Edebiyatı</option>
+                <option value="Tarih">Tarih</option>
+                <option value="Coğrafya">Coğrafya</option>
+                <option value="Felsefe">Felsefe</option>
+                <option value="İngilizce">İngilizce</option>
+                <option value="Bilişim Teknolojileri">Bilişim Teknolojileri</option>
+                <option value="Beden Eğitimi">Beden Eğitimi</option>
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">E-posta</label>
@@ -906,15 +938,16 @@
     </div>
   </div>
 
-  <!-- MODAL 2: YENİ ÖĞRENCİ EKLE (ÖĞRETMEN VE YÖNETİCİ) -->
+  <!-- MODAL 2: YENİ ÖĞRENCİ EKLE VEYA BİLGİ GÜNCELLE (ÖĞRETMEN VE YÖNETİCİ) -->
   <div class="modal-overlay" id="modalStudent">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>Yeni Öğrenci ve Giriş Bilgileri Tanımla</h3>
+        <h3 id="modalStudentTitle">Yeni Öğrenci ve Giriş Bilgileri Tanımla</h3>
         <button class="modal-close-btn" data-close="modalStudent">&times;</button>
       </div>
       <div class="modal-body">
         <form id="formStudent">
+          <input type="hidden" id="editStudentIdTarget">
           <div class="form-grid">
             <div class="form-group col-span-2">
               <label class="form-label">Öğrenci Adı Soyadı *</label>
@@ -948,7 +981,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Şube</label>
+              <label class="form-label">Şube *</label>
               <select id="stdSection" class="form-select">
                 <option value="A">A Şubesi</option>
                 <option value="B">B Şubesi</option>
@@ -987,19 +1020,38 @@
     </div>
   </div>
 
-  <!-- MODAL: ÖĞRETMEN KULLANICI ADI VE ŞİFRE DÜZENLEME (YÖNETİCİ) -->
+  <!-- MODAL: ÖĞRETMEN BİLGİLERİ VE ŞİFRE DÜZENLEME (YÖNETİCİ) -->
   <div class="modal-overlay" id="modalEditTeacherCredentials">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>Öğretmen Kullanıcı Adı ve Şifre Güncelle</h3>
+        <h3>Öğretmen Bilgilerini ve Giriş Şifresini Güncelle</h3>
         <button class="modal-close-btn" data-close="modalEditTeacherCredentials">&times;</button>
       </div>
       <div class="modal-body">
         <form id="formEditTeacherCredentials">
           <input type="hidden" id="editTeacherId">
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label">Öğretmen Adı Soyadı</label>
-            <input type="text" id="editTeacherName" class="form-input" readonly style="background: var(--bg-main); font-weight: 600;">
+          <div class="form-grid" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label">Öğretmen Adı Soyadı *</label>
+              <input type="text" id="editTeacherName" class="form-input" required style="font-weight: 600;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Branşı *</label>
+              <select id="editTeacherBranch" class="form-select" required>
+                <option value="Rehberlik ve Psikolojik Danışmanlık">Rehberlik ve Psikolojik Danışmanlık</option>
+                <option value="Matematik">Matematik</option>
+                <option value="Fizik">Fizik</option>
+                <option value="Kimya">Kimya</option>
+                <option value="Biyoloji">Biyoloji</option>
+                <option value="Türk Dili ve Edebiyatı">Türk Dili ve Edebiyatı</option>
+                <option value="Tarih">Tarih</option>
+                <option value="Coğrafya">Coğrafya</option>
+                <option value="Felsefe">Felsefe</option>
+                <option value="İngilizce">İngilizce</option>
+                <option value="Bilişim Teknolojileri">Bilişim Teknolojileri</option>
+                <option value="Beden Eğitimi">Beden Eğitimi</option>
+              </select>
+            </div>
           </div>
           <div class="form-grid" style="margin-bottom: 16px;">
             <div class="form-group">
@@ -1026,19 +1078,50 @@
     </div>
   </div>
 
-  <!-- MODAL: ÖĞRENCİ KULLANICI ADI VE ŞİFRE DÜZENLEME (ÖĞRETMEN / YÖNETİCİ) -->
+  <!-- MODAL: ÖĞRENCİ GİRİŞ VE PROFİL DÜZENLEME (ÖĞRETMEN / YÖNETİCİ) -->
   <div class="modal-overlay" id="modalEditStudentCredentials">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>Öğrenci Kullanıcı Adı ve Şifre Güncelle</h3>
+        <h3>Öğrenci Bilgileri ve Şifre Güncelle</h3>
         <button class="modal-close-btn" data-close="modalEditStudentCredentials">&times;</button>
       </div>
       <div class="modal-body">
         <form id="formEditStudentCredentials">
           <input type="hidden" id="editStudentId">
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label">Öğrenci Adı Soyadı</label>
-            <input type="text" id="editStudentName" class="form-input" readonly style="background: var(--bg-main); font-weight: 600;">
+          <div class="form-grid" style="margin-bottom: 12px;">
+            <div class="form-group col-span-2">
+              <label class="form-label">Öğrenci Adı Soyadı *</label>
+              <input type="text" id="editStudentName" class="form-input" required style="font-weight: 600;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sınıf</label>
+              <select id="editStudentGrade" class="form-select">
+                <option value="12. Sınıf">12. Sınıf</option>
+                <option value="11. Sınıf">11. Sınıf</option>
+                <option value="10. Sınıf">10. Sınıf</option>
+                <option value="9. Sınıf">9. Sınıf</option>
+                <option value="Mezun">Mezun</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Şube *</label>
+              <select id="editStudentSection" class="form-select">
+                <option value="A">A Şubesi</option>
+                <option value="B">B Şubesi</option>
+                <option value="C">C Şubesi</option>
+                <option value="D">D Şubesi</option>
+                <option value="E">E Şubesi</option>
+              </select>
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Alanı</label>
+              <select id="editStudentField" class="form-select">
+                <option value="Sayısal">Sayısal</option>
+                <option value="Eşit Ağırlık">Eşit Ağırlık</option>
+                <option value="Sözel">Sözel</option>
+                <option value="Dil">Dil</option>
+              </select>
+            </div>
           </div>
           <div class="form-grid" style="margin-bottom: 16px;">
             <div class="form-group">
@@ -1075,6 +1158,13 @@
       <div class="modal-body">
         <form id="formExam">
           <div class="form-grid" style="margin-bottom: 14px;">
+            <!-- Çoklu / Toplu modda öğrenci seçimi -->
+            <div class="form-group col-span-2" id="examStudentSelectRow" style="display: none;">
+              <label class="form-label">Sınavın Ekleneceği Öğrenci <span style="color:var(--danger)">*</span></label>
+              <select id="examStudentSelect" class="form-select" style="font-weight: 600;">
+                <!-- Dinamik doldurulacak -->
+              </select>
+            </div>
             <div class="form-group">
               <label class="form-label">Sınav Türü</label>
               <select id="examTypeSelect" class="form-select">
@@ -1083,11 +1173,11 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Sınav Tarihi</label>
+              <label class="form-label">Sınav Tarihi <span style="color:var(--danger)">*</span></label>
               <input type="date" id="examDate" class="form-input" required>
             </div>
             <div class="form-group col-span-2">
-              <label class="form-label">Deneme ve Yayın Adı</label>
+              <label class="form-label">Deneme ve Yayın Adı <span style="color:var(--danger)">*</span></label>
               <input type="text" id="examName" class="form-input" required placeholder="Örn: 3D Türkiye Geneli TYT">
             </div>
             <div class="form-group">
