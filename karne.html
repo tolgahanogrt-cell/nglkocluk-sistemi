@@ -262,6 +262,86 @@
       color: #334155;
     }
 
+    /* Mobil Ekranlar İçin Responsive Tasarım */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .print-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px 14px;
+      }
+
+      .toolbar-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+      }
+
+      .toolbar-actions button {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .karne-document {
+        padding: 16px 12px;
+      }
+
+      .karne-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+      }
+
+      .karne-logo-area {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .karne-meta-box {
+        text-align: center;
+      }
+
+      .karne-profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .karne-document table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .karne-table th,
+      .karne-table td {
+        padding: 6px 4px;
+        font-size: 11px;
+      }
+
+      .karne-signature-area {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .karne-sign-box {
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+
+    @media screen and (max-width: 420px) {
+      .karne-profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Yazdırma (Print) Ayarları - Tam A4 Uyumu */
     @page {
       size: A4 portrait;
