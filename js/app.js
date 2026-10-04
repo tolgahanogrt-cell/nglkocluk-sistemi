@@ -129,11 +129,9 @@ class App {
 
     // Çıkış Yap Butonu
     document.getElementById("btnLogout")?.addEventListener("click", () => {
-      if (confirm("Oturumu kapatmak istediğinize emin misiniz?")) {
-        window.store.logout();
-        this.checkAuth();
-        this.showToast("Oturum kapatıldı.", "info");
-      }
+      window.store.logout();
+      this.checkAuth();
+      this.showToast("Oturum kapatıldı.", "info");
     });
 
     // Sekme Değişimi
