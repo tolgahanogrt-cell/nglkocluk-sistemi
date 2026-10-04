@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğrenci Karnesi - Nafi Güral Fen Lisesi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-dark: #1e3a8a;
+      --primary-light: #eff6ff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --bg-card: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Yazdırma Kontrol Çubuğu (Yalnızca Ekranda Görünür) */
+    .print-toolbar {
+      position: sticky;
+      top: 12px;
+      z-index: 1000;
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 10px 25px -5px rgba(29, 78, 216, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .toolbar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toolbar-info strong {
+      font-size: 14px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-info span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-print:hover {
+      background: linear-gradient(135deg, #1e40af, #1d4ed8);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-close {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-close:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    /* Karne Dokümanı */
+    .karne-document-wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .karne-document {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 32px 36px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .karne-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+
+    .karne-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .karne-logo-img {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .karne-title-area h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      letter-spacing: -0.01em;
+    }
+
+    .karne-title-area p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .karne-meta-box {
+      text-align: right;
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .karne-section {
+      margin-bottom: 18px;
+    }
+
+    .karne-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--primary);
+      padding-left: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .karne-profile-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      background: var(--bg-card);
+      padding: 12px 14px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+
+    .karne-profile-item span {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .karne-profile-item strong {
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .karne-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .karne-table th,
+    .karne-table td {
+      border: 1px solid var(--border-color);
+      padding: 7px 10px;
+      text-align: center;
+    }
+
+    .karne-table th {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .karne-coach-notes-box {
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--primary-dark);
+      line-height: 1.6;
+    }
+
+    .karne-signature-area {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .karne-sign-box {
+      text-align: center;
+      font-size: 12px;
+      width: 180px;
+    }
+
+    .karne-sign-line {
+      margin-top: 36px;
+      border-top: 1px solid #94a3b8;
+      padding-top: 4px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    /* Yazdırma (Print) Ayarları - Tam A4 Uyumu */
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        color: #000000 !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .karne-document-wrap {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .karne-document {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+
+      .karne-profile-grid,
+      .karne-table th,
+      .karne-coach-notes-box {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ekran Üst Kontrol Çubuğu (Baskıda Gizlenir) -->
+  <div class="print-toolbar no-print">
+    <div class="toolbar-info">
+      <strong>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Nafi Güral Fen Lisesi - Öğrenci Karnesi
+      </strong>
+      <span id="toolbarSubtitle">Yazdırma ve PDF kaydetme sayfası hazırlanıyor...</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn-print" id="btnManualPrint" onclick="window.print()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Yazdır / PDF Olarak Kaydet
+      </button>
+      <button class="btn-close" onclick="window.close()">✕ Pencereyi Kapat</button>
+    </div>
+  </div>
+
+  <!-- Karne İçeriği Konteyneri -->
+  <div class="karne-document-wrap" id="karneContainer">
+    <div style="text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px;" id="loadingState">
+      Karne yükleniyor, lütfen bekleyiniz...
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      function loadKarne() {
+        var container = document.getElementById("karneContainer");
+        var subtitle = document.getElementById("toolbarSubtitle");
+        var payload = null;
+
+        // 1. Önce URL hash (#k=...) kontrol edilir (iframe izolasyonunu ve storage kısıtlamalarını %100 aşar)
+        if (window.location.hash && window.location.hash.indexOf("#k=") === 0) {
+          try {
+            var rawB64 = window.location.hash.substring(3);
+            var jsonStr = decodeURIComponent(escape(atob(rawB64)));
+            payload = JSON.parse(jsonStr);
+          } catch (e) {
+            console.warn("Hash çözümlenemedi:", e);
+          }
+        }
+
+        // 2. Hash yoksa localStorage payload kontrol edilir
+        if (!payload) {
+          try {
+            var stored = localStorage.getItem("ngk_karne_print_payload");
+            if (stored) {
+              payload = JSON.parse(stored);
+            }
+          } catch (e) {
+            console.warn("localStorage erişilemedi:", e);
+          }
+        }
+
+        // 3. İçerik yerleştirme
+        if (payload && payload.html) {
+          container.innerHTML = payload.html;
+
+          var docTitle = payload.title || "Öğrenci Karnesi";
+          if (payload.studentName) {
+            docTitle = "Öğrenci Karnesi - " + payload.studentName;
+          }
+          document.title = docTitle;
+
+          if (subtitle) {
+            subtitle.textContent = (payload.studentName ? payload.studentName + " • " : "") + 
+                                   (payload.periodLabel || "Resmi Karne") + 
+                                   (payload.date ? " (" + payload.date + ")" : "");
+          }
+
+          // Otomatik yazdırma penceresi aç (kullanıcı jestinden türeyen sekme olduğu için engellenmez)
+          setTimeout(function() {
+            try {
+              window.print();
+            } catch (err) {
+              console.warn("Otomatik yazdırma tetiklenemedi:", err);
+            }
+          }, 400);
+        } else {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color);">
+              <h3 style="color: #ef4444; margin-bottom: 10px;">Karne Verisi Bulunamadı</h3>
+              <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">
+                Lütfen ana panelden bir öğrenci seçip "Yazdır / PDF Olarak Kaydet" butonuna tekrar tıklayınız.
+              </p>
+              <button class="btn-close" onclick="window.close()">Pencereyi Kapat</button>
+            </div>
+          `;
+          if (subtitle) {
+            subtitle.textContent = "Veri aktarılamadı. Lütfen ana sayfadan tekrar deneyiniz.";
+          }
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadKarne);
+      } else {
+        loadKarne();
+      }
+    })();
+  </script>
+</body>
+</html>
