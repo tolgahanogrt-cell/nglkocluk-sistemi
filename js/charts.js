@@ -122,7 +122,7 @@ class ChartManager {
       });
     }
 
-    const labels = finalTyt.map(e => e.name || e.date);
+    const labels = finalTyt.map(e => e.name || (window.AnalyticsEngine ? AnalyticsEngine.formatDateTurkish(e.date) : e.date));
     const dataNets = finalTyt.map(e => e.totalNet);
     const turkceNets = finalTyt.map(e => e.tyt?.turkce?.net || 0);
     const matNets = finalTyt.map(e => e.tyt?.matematik?.net || 0);
@@ -309,7 +309,7 @@ class ChartManager {
       });
     }
 
-    const labels = finalAyt.map(e => e.name || e.date);
+    const labels = finalAyt.map(e => e.name || (window.AnalyticsEngine ? AnalyticsEngine.formatDateTurkish(e.date) : e.date));
     const dataNets = finalAyt.map(e => e.totalNet);
     const matNets = finalAyt.map(e => e.ayt?.matematik?.net || 0);
 
