@@ -11,6 +11,63 @@
 </head>
 <body>
 
+  <!-- ================= GİRİŞ PANELİ (AUTH OVERLAY) ================= -->
+  <div class="auth-wrapper" id="authWrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">🎓</div>
+        <div class="auth-title">Nafi Güral Fen Lisesi</div>
+        <div class="auth-subtitle">Öğrenci Koçluk & Başarı Takip Portalı</div>
+      </div>
+
+      <!-- Giriş Türü Sekmeleri -->
+      <div class="auth-role-tabs">
+        <button class="auth-tab-btn active" id="tabBtnCoach">
+          <span>👑</span> Koç / Öğretmen
+        </button>
+        <button class="auth-tab-btn" id="tabBtnStudent">
+          <span>👤</span> Öğrenci / Veli
+        </button>
+      </div>
+
+      <div class="auth-body">
+        <!-- KOÇ GİRİŞ FORMU -->
+        <form id="formCoachLogin">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Koçluk Yönetici Şifresi</label>
+            <input type="password" id="coachPasswordInput" class="form-input" placeholder="Şifrenizi giriniz..." required autofocus>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 11px;">
+            Yönetim Paneline Giriş Yap
+          </button>
+          <div class="auth-hint">
+            🔑 İlk giriş için varsayılan şifre: <strong>1234</strong>
+          </div>
+        </form>
+
+        <!-- ÖĞRENCİ GİRİŞ FORMU -->
+        <form id="formStudentLogin" style="display: none;">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Öğrenci Seçiniz</label>
+            <select id="loginStudentSelect" class="form-select">
+              <!-- Dinamik doldurulacak -->
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Öğrenci PIN Kodu (Varsayılan: 1234)</label>
+            <input type="password" id="studentPinInput" class="form-input" placeholder="PIN kodu..." value="1234">
+          </div>
+          <button type="submit" class="btn btn-success" style="width: 100%; padding: 11px;">
+            Öğrenci Karneme Git
+          </button>
+          <div class="auth-hint">
+            ℹ️ Öğrenci modunda sadece kendi karnenizi, grafiklerinizi ve ödevlerinizi görüntüleyebilirsiniz.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div class="app-layout">
     <!-- SOL MENÜ (SIDEBAR) -->
     <aside class="sidebar">
@@ -23,15 +80,15 @@
         </div>
         <div>
           <div class="brand-title">Koçluk Asistanı</div>
-          <div class="brand-subtitle">YKS Başarı Takip Sistemi</div>
+          <div class="brand-subtitle">NGFL Başarı Takip Sistemi</div>
         </div>
       </div>
 
-      <!-- Öğrenci Seçici -->
-      <div class="student-selector-box">
+      <!-- Öğrenci Seçici (Öğrenci modunda gizlenir veya kilitlenir) -->
+      <div class="student-selector-box" id="sidebarStudentSelectorBox">
         <div class="student-selector-header">
           <span class="student-selector-title">Aktif Öğrenci</span>
-          <button class="btn btn-secondary btn-sm" id="btnOpenNewStudentModal" title="Yeni Öğrenci Ekle">+ Ekle</button>
+          <button class="btn btn-secondary btn-sm coach-only" id="btnOpenNewStudentModal" title="Yeni Öğrenci Ekle">+ Ekle</button>
         </div>
         <select id="studentSelect" class="student-select">
           <!-- Dinamik doldurulacak -->
@@ -70,14 +127,18 @@
           Öğrenci Karnesi (PDF/Çıktı)
         </button>
 
-        <button class="nav-item" data-tab="backup">
+        <button class="nav-item coach-only" data-tab="backup">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Yedekle / Taşı
         </button>
       </nav>
 
-      <!-- Alt Bar -->
+      <!-- Alt Bar: Rol Durumu, Tema ve Çıkış -->
       <div class="sidebar-footer">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span class="user-role-badge badge-primary" id="sidebarRoleBadge">👑 Koç</span>
+          <button class="btn btn-secondary btn-sm" id="btnLogout" title="Oturumu Kapat">🚪 Çıkış</button>
+        </div>
         <button class="btn btn-secondary btn-sm" id="btnToggleTheme" style="width: 100%;">
           <span id="themeIcon">🌙</span> Koyu / Açık Tema
         </button>
@@ -93,8 +154,8 @@
           <p id="topbarSubtitle">Öğrenci gelişim ve koçluk paneli</p>
         </div>
         <div class="topbar-actions">
-          <button class="btn btn-secondary btn-sm" id="btnQuickAddExam">+ Deneme Ekle</button>
-          <button class="btn btn-secondary btn-sm" id="btnQuickAddQuestion">+ Soru Girişi</button>
+          <button class="btn btn-secondary btn-sm coach-only" id="btnQuickAddExam">+ Deneme Ekle</button>
+          <button class="btn btn-secondary btn-sm coach-only" id="btnQuickAddQuestion">+ Soru Girişi</button>
           <button class="btn btn-primary btn-sm" id="btnQuickKarne">📄 Karne Oluştur</button>
         </div>
       </header>
