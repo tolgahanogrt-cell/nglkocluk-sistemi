@@ -173,7 +173,7 @@ const INITIAL_DEMO_DATA = {
       username: "emir",
       password: "123",
       field: "Eşit Ağırlık",
-      grade: "Mezun",
+      grade: "12. Sınıf",
       section: "B",
       targetUniversity: "Koç Üniversitesi",
       targetDepartment: "Hukuk Fakültesi",
@@ -261,7 +261,7 @@ const INITIAL_DEMO_DATA = {
         { id: "ca-201", date: "2026-09-22", type: "Özürsüz", hours: 6, reason: "Mazeretsiz devamsızlık" }
       ],
       coachingSessions: [
-        { id: "cs-201", date: "2026-09-09", title: "1. Hafta Tanışma ve Planlama", status: "Katıldı", studentMotivation: 8, summary: "Mezun programı çıkarıldı.", assignments: ["Geometri başlangıç"] },
+        { id: "cs-201", date: "2026-09-09", title: "1. Hafta Tanışma ve Planlama", status: "Katıldı", studentMotivation: 8, summary: "12. sınıf YKS çalışma programı çıkarıldı.", assignments: ["Geometri başlangıç"] },
         { id: "cs-202", date: "2026-09-23", title: "2. Hafta Edebiyat Analizi", status: "Katıldı", studentMotivation: 8.5, summary: "Edebiyat netleri yüksek.", assignments: ["AYT Matematik türev"] }
       ]
     },
