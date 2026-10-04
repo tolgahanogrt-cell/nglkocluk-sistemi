@@ -610,7 +610,27 @@ class App {
     document.getElementById("editTeacherId").value = teacher.id;
     document.getElementById("editTeacherName").value = teacher.name;
     const branchEl = document.getElementById("editTeacherBranch");
-    if (branchEl) branchEl.value = teacher.branch;
+    if (branchEl) {
+      if (teacher.branch) {
+        let found = false;
+        for (let i = 0; i < branchEl.options.length; i++) {
+          if (branchEl.options[i].value === teacher.branch) {
+            branchEl.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          const opt = document.createElement("option");
+          opt.value = teacher.branch;
+          opt.textContent = teacher.branch;
+          branchEl.appendChild(opt);
+          branchEl.value = teacher.branch;
+        }
+      } else {
+        branchEl.value = "";
+      }
+    }
     document.getElementById("editTeacherUsername").value = teacher.username;
     document.getElementById("editTeacherPassword").value = teacher.password;
 
@@ -637,12 +657,16 @@ class App {
   handleSaveTeacherCredentials() {
     const id = document.getElementById("editTeacherId").value;
     const name = document.getElementById("editTeacherName").value.trim();
-    const branch = document.getElementById("editTeacherBranch")?.value || "Rehberlik ve Psikolojik Danışmanlık";
+    const branch = document.getElementById("editTeacherBranch")?.value;
     const newUsername = document.getElementById("editTeacherUsername").value.trim();
     const newPassword = document.getElementById("editTeacherPassword").value.trim();
 
     if (!name || !newUsername || !newPassword) {
       alert("Lütfen ad soyad, kullanıcı adı ve şifre alanlarını eksiksiz doldurunuz.");
+      return;
+    }
+    if (!branch) {
+      alert("Lütfen öğretmenin branşını seçiniz.");
       return;
     }
 
@@ -1334,8 +1358,12 @@ class App {
       // Yeni kayıt modu: önceki düzenleme durumunu ve form değerlerini temizle
       this.editing = null;
       this.modalStudentOverride = null;
-      const formMap = { modalExam: "formExam", modalQuestion: "formQuestion", modalBulkCourseAttendance: "formBulkAttendance", modalSession: "formSession" };
+      const formMap = { modalTeacher: "formTeacher", modalExam: "formExam", modalQuestion: "formQuestion", modalBulkCourseAttendance: "formBulkAttendance", modalSession: "formSession" };
       if (formMap[modalId]) document.getElementById(formMap[modalId])?.reset();
+      if (modalId === "modalTeacher") {
+        const tb = document.getElementById("tBranch");
+        if (tb) tb.value = "";
+      }
       this.setModalMode(modalId, false);
     }
     modal.classList.add("active");
@@ -1572,6 +1600,7 @@ class App {
   // --- Form Kayıtları ---
   handleSaveTeacher() {
     const name = document.getElementById("tName").value.trim();
+    const branch = document.getElementById("tBranch").value;
     const username = document.getElementById("tUsername").value.trim();
     const password = document.getElementById("tPassword").value.trim();
 
@@ -1579,10 +1608,14 @@ class App {
       alert("Lütfen Ad Soyad, Kullanıcı Adı ve Şifre alanlarını doldurunuz.");
       return;
     }
+    if (!branch) {
+      alert("Lütfen öğretmenin branşını seçiniz.");
+      return;
+    }
 
     const newTeacher = window.store.addTeacher({
       name: name,
-      branch: document.getElementById("tBranch").value,
+      branch: branch,
       email: document.getElementById("tEmail").value,
       username: username,
       password: password
@@ -1590,6 +1623,8 @@ class App {
 
     this.closeModal("modalTeacher");
     document.getElementById("formTeacher").reset();
+    const tb = document.getElementById("tBranch");
+    if (tb) tb.value = "";
     this.renderTeachersTable();
     this.showToast(`Yeni öğretmen (${newTeacher.name}) başarıyla tanımlandı!`, "success");
   }
