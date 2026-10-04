@@ -168,6 +168,8 @@ class App {
     // 9. Form Kayıt Butonları
     document.getElementById("btnSaveTeacher")?.addEventListener("click", () => this.handleSaveTeacher());
     document.getElementById("btnSaveStudent")?.addEventListener("click", () => this.handleSaveStudent());
+    document.getElementById("btnSaveEditTeacherCredentials")?.addEventListener("click", () => this.handleSaveTeacherCredentials());
+    document.getElementById("btnSaveEditStudentCredentials")?.addEventListener("click", () => this.handleSaveStudentCredentials());
     document.getElementById("btnSaveExam")?.addEventListener("click", () => this.handleSaveExam());
     document.getElementById("btnSaveQuestion")?.addEventListener("click", () => this.handleSaveQuestion());
     document.getElementById("btnSaveBulkAttendance")?.addEventListener("click", () => this.handleSaveBulkAttendance());
@@ -310,20 +312,91 @@ class App {
     }
 
     teachers.forEach(t => {
+      const prevCreds = (t.previousCredentials && t.previousCredentials.length > 0)
+        ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px; padding:3px 6px; background:var(--bg-main); border-radius:4px; border:1px dashed var(--border-color);">
+            <strong style="color:var(--text-main);">Önceki:</strong> <code>${t.previousCredentials[0].username}</code> / <code>${t.previousCredentials[0].password}</code>
+            <span style="font-size:10px; display:block; color:var(--text-muted);">${t.previousCredentials[0].changedAt || ''}</span>
+           </div>`
+        : '';
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><strong>${t.name}</strong></td>
         <td>${t.branch}</td>
-        <td><code>${t.username}</code></td>
-        <td><code>${t.password}</code></td>
+        <td>
+          <code>${t.username}</code>
+          ${prevCreds}
+        </td>
+        <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${t.password}</code></td>
         <td>${t.email || "-"}</td>
         <td>${t.createdAt || "-"}</td>
         <td>
-          <button class="btn btn-danger btn-sm" onclick="app.deleteTeacher('${t.id}')">Sil</button>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditTeacherCredentials('${t.id}')">🔑 Şifre Değiştir</button>
+            <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteTeacher('${t.id}')">Sil</button>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  deleteTeacher(teacherId) {
+    const teacher = (window.store.data.teachers || []).find(t => t.id === teacherId);
+    const name = teacher ? teacher.name : "Öğretmen";
+    if (confirm(`"${name}" adlı öğretmeni ve erişim yetkisini silmek istediğinize emin misiniz?`)) {
+      window.store.deleteTeacher(teacherId);
+      this.renderTeachersTable();
+      this.showToast(`${name} başarıyla silindi.`, "info");
+    }
+  }
+
+  openEditTeacherCredentials(teacherId) {
+    const teacher = (window.store.data.teachers || []).find(t => t.id === teacherId);
+    if (!teacher) return;
+
+    document.getElementById("editTeacherId").value = teacher.id;
+    document.getElementById("editTeacherName").value = `${teacher.name} (${teacher.branch})`;
+    document.getElementById("editTeacherUsername").value = teacher.username;
+    document.getElementById("editTeacherPassword").value = teacher.password;
+
+    const histContainer = document.getElementById("teacherCredentialsHistory");
+    if (histContainer) {
+      if (!teacher.previousCredentials || teacher.previousCredentials.length === 0) {
+        histContainer.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">Henüz geçmiş kullanıcı adı / şifre değişikliği kaydı bulunmamaktadır.</span>`;
+      } else {
+        histContainer.innerHTML = teacher.previousCredentials.map((h, i) => `
+          <div style="padding: 6px 0; border-bottom: 1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>Kullanıcı Adı:</strong> <code>${h.username}</code> &nbsp;|&nbsp; 
+              <strong>Şifre:</strong> <code>${h.password}</code>
+            </div>
+            <span style="font-size:11px; color:var(--text-muted);">${h.changedAt || ''}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    this.openModal("modalEditTeacherCredentials");
+  }
+
+  handleSaveTeacherCredentials() {
+    const id = document.getElementById("editTeacherId").value;
+    const newUsername = document.getElementById("editTeacherUsername").value.trim();
+    const newPassword = document.getElementById("editTeacherPassword").value.trim();
+
+    if (!newUsername || !newPassword) {
+      alert("Lütfen hem kullanıcı adını hem de şifreyi doldurunuz.");
+      return;
+    }
+
+    const res = window.store.updateTeacherCredentials(id, newUsername, newPassword);
+    if (res.success) {
+      this.closeModal("modalEditTeacherCredentials");
+      this.renderTeachersTable();
+      this.showToast("Öğretmen kullanıcı adı ve şifresi başarıyla güncellendi!", "success");
+    } else {
+      alert(res.message || "Güncelleme başarısız.");
+    }
   }
 
   renderStudentsTable() {
@@ -341,6 +414,13 @@ class App {
       const tr = document.createElement("tr");
       const isCurrent = s.id === window.store.activeStudentId;
       const initials = s.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+      const prevCreds = (s.previousCredentials && s.previousCredentials.length > 0)
+        ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px; padding:3px 6px; background:var(--bg-main); border-radius:4px; border:1px dashed var(--border-color);">
+            <strong style="color:var(--text-main);">Önceki:</strong> <code>${s.previousCredentials[0].username}</code> / <code>${s.previousCredentials[0].password}</code>
+            <span style="font-size:10px; display:block; color:var(--text-muted);">${s.previousCredentials[0].changedAt || ''}</span>
+           </div>`
+        : '';
+
       tr.innerHTML = `
         <td>
           <div style="display:flex; align-items:center; gap:10px;">
@@ -355,12 +435,16 @@ class App {
         </td>
         <td><span class="badge badge-primary">${s.field}</span></td>
         <td><span class="badge badge-outline">${s.grade}</span></td>
-        <td><code>${s.username}</code></td>
+        <td>
+          <code>${s.username}</code>
+          ${prevCreds}
+        </td>
         <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${s.password}</code></td>
         <td><span style="font-size:12px; color:var(--text-main);">${s.targetUniversity || '-'} - ${s.targetDepartment || '-'}</span></td>
         <td><span style="font-size:12px; font-weight:600; color:var(--primary);">TYT: ${s.targetTytNet || '-'} | AYT: ${s.targetAytNet || '-'}</span></td>
         <td>
-          <div style="display:flex; gap:6px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudentCredentials('${s.id}')">🔑 Şifre Değiştir</button>
             <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.selectStudentFromTable('${s.id}')">Profili Aç</button>
             <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteStudent('${s.id}')">Sil</button>
           </div>
@@ -368,6 +452,55 @@ class App {
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  openEditStudentCredentials(studentId) {
+    const student = (window.store.data.students || []).find(s => s.id === studentId);
+    if (!student) return;
+
+    document.getElementById("editStudentId").value = student.id;
+    document.getElementById("editStudentName").value = `${student.name} (${student.field} - ${student.grade})`;
+    document.getElementById("editStudentUsername").value = student.username;
+    document.getElementById("editStudentPassword").value = student.password;
+
+    const histContainer = document.getElementById("studentCredentialsHistory");
+    if (histContainer) {
+      if (!student.previousCredentials || student.previousCredentials.length === 0) {
+        histContainer.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">Henüz geçmiş kullanıcı adı / şifre değişikliği kaydı bulunmamaktadır.</span>`;
+      } else {
+        histContainer.innerHTML = student.previousCredentials.map((h, i) => `
+          <div style="padding: 6px 0; border-bottom: 1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>Kullanıcı Adı:</strong> <code>${h.username}</code> &nbsp;|&nbsp; 
+              <strong>Şifre:</strong> <code>${h.password}</code>
+            </div>
+            <span style="font-size:11px; color:var(--text-muted);">${h.changedAt || ''}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    this.openModal("modalEditStudentCredentials");
+  }
+
+  handleSaveStudentCredentials() {
+    const id = document.getElementById("editStudentId").value;
+    const newUsername = document.getElementById("editStudentUsername").value.trim();
+    const newPassword = document.getElementById("editStudentPassword").value.trim();
+
+    if (!newUsername || !newPassword) {
+      alert("Lütfen hem kullanıcı adını hem de şifreyi doldurunuz.");
+      return;
+    }
+
+    const res = window.store.updateStudentCredentials(id, newUsername, newPassword);
+    if (res.success) {
+      this.closeModal("modalEditStudentCredentials");
+      this.renderStudentsTable();
+      this.showToast("Öğrenci kullanıcı adı ve şifresi başarıyla güncellendi!", "success");
+    } else {
+      alert(res.message || "Güncelleme başarısız.");
+    }
   }
 
   selectStudentFromTable(studentId) {
