@@ -16,7 +16,7 @@
   <script src="lib/chart.umd.min.js"></script>
   <!-- Tailwind 2 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <link rel="stylesheet" href="css/style.css?v=5.4">
 </head>
 <body>
 
@@ -212,10 +212,21 @@
           <h1 id="topbarTitle">Genel Bakış</h1>
           <p id="topbarSubtitle">Öğrenci gelişim ve koçluk paneli</p>
         </div>
+
+        <!-- YKS Geri Sayım Rozeti -->
+        <div class="yks-countdown-badge" id="topbarYksCountdown" title="YKS 2027 Hedefine Kalan Gün Sayısı">
+          <span class="badge-icon">⏳</span>
+          <div>
+            <span class="badge-label">YKS 2027 Geri Sayım</span>
+            <span class="badge-timer" id="yksCountdownText">TYT: -- Gün | AYT: -- Gün</span>
+          </div>
+        </div>
+
         <div class="topbar-actions">
           <button class="btn btn-secondary btn-sm teacher-and-admin-only" id="btnQuickAddStudent">+ Öğrenci Tanımla</button>
           <button class="btn btn-secondary btn-sm teacher-and-admin-only" id="btnQuickAddExam">+ Deneme Ekle</button>
           <button class="btn btn-secondary btn-sm" id="btnQuickAddQuestion">+ Soru Girişi</button>
+          <button class="btn btn-secondary btn-sm teacher-and-admin-only" id="btnQuickBackup" title="Tüm Verileri Yedekle, Geri Yükle veya Excel CSV Aktar">💾 Yedek & Aktar</button>
           <button class="btn btn-primary btn-sm" id="btnQuickKarne">📄 Karne Görüntüle</button>
           <button class="btn btn-danger btn-sm" id="btnTopbarLogout" title="Sistemden Çıkış Yap">🚪 Çıkış</button>
         </div>
@@ -397,6 +408,8 @@
                 <span class="badge badge-outline" id="heroGrade">-</span>
                 <span class="badge badge-outline" id="heroExamCount">0 TYT / 0 AYT</span>
               </div>
+              <!-- Dinamik Gamification ve Başarı Rozetleri -->
+              <div id="heroBadges" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;"></div>
             </div>
           </div>
           <div class="student-hero-target">
@@ -406,6 +419,18 @@
               Hedef: TYT 0 Net | AYT 0 Net
             </div>
           </div>
+        </div>
+
+        <!-- Günün Motivasyon ve Koçluk İpucu -->
+        <div class="motivation-banner" id="motivationBanner">
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+            <div style="font-size: 26px; line-height: 1; flex-shrink: 0;">💡</div>
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Günün Koçluk İpucu & Motivasyon Sözü</div>
+              <div id="motivationQuoteText" style="font-size: 13px; font-weight: 600; color: #1e1b4b; margin-top: 2px;">"Başarı, her gün tekrarlanan küçük disiplinlerin toplamıdır."</div>
+            </div>
+          </div>
+          <button id="btnNewQuote" class="btn btn-secondary btn-sm" style="font-size: 11px; white-space: nowrap;" title="Farklı bir motivasyon ipucu göster">🔄 Yeni İpucu</button>
         </div>
 
         <!-- Durum ve Gelişim Özeti -->
@@ -465,6 +490,41 @@
             <div class="kpi-val" id="kpiAttendanceRate">0 Kayıt</div>
             <div class="kpi-footer" id="kpiAttendanceDetails">
               <span>Toplam 0 Ders Saati</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Haftalık Koçluk Görevleri ve Hedefler (To-Do / Ödev Takibi) -->
+        <div class="card" id="cardWeeklyTasks" style="margin-bottom: 20px;">
+          <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">📋</span>
+              <div>
+                <h3 style="margin: 0; font-size: 15px;">Haftalık Koçluk Görevleri ve Hedefler</h3>
+                <p style="margin: 0; font-size: 11px; color: var(--text-muted);">Öğrenciye atanan hedefler, konu tekrarları ve ödev tamamlama durumu</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="taskProgressBadge" class="badge badge-primary">0/0 Tamamlandı (%0)</span>
+              <button class="btn btn-primary btn-sm teacher-and-admin-only" id="btnOpenNewTaskModal">+ Yeni Görev Ata</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 16px 20px;">
+            <!-- Görev İlerleme Çubuğu -->
+            <div style="margin-bottom: 14px;">
+              <div class="progress-bar-bg" style="height: 8px; border-radius: 4px;">
+                <div class="progress-bar-fill" id="taskProgressBarFill" style="width: 0%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--primary), #10b981); transition: width 0.3s ease;"></div>
+              </div>
+            </div>
+            <!-- Görev Filtre Butonları -->
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+              <button class="task-filter-btn active" data-task-filter="all">Tümü (<span id="taskCountAll">0</span>)</button>
+              <button class="task-filter-btn" data-task-filter="pending">Bekleyenler (<span id="taskCountPending">0</span>)</button>
+              <button class="task-filter-btn" data-task-filter="completed">Tamamlananlar (<span id="taskCountCompleted">0</span>)</button>
+            </div>
+            <!-- Görev Listesi -->
+            <div id="tasksListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- JS ile dinamik doldurulacak -->
             </div>
           </div>
         </div>
@@ -1608,6 +1668,99 @@
     </div>
   </div>
 
+  <!-- MODAL 7: YENİ KOÇLUK GÖREVİ VE HEDEF ATAMA -->
+  <div class="modal-overlay" id="modalTask">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Yeni Koçluk Görevi ve Hedef Ata</h3>
+        <button class="modal-close-btn" data-close="modalTask">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formTask">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Görev / Hedef Başlığı *</label>
+            <input type="text" id="taskTitle" class="form-input" placeholder="Örn: Günlük 40 Paragraf & Problemler Soru Çözümü" required>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Son Teslim / Tamamlama Tarihi *</label>
+              <input type="date" id="taskDueDate" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kategori / Branş</label>
+              <select id="taskCategory" class="form-select">
+                <option value="Genel Hedef">Genel Hedef</option>
+                <option value="Türkçe / Paragraf">Türkçe / Paragraf</option>
+                <option value="Matematik / Geometri">Matematik / Geometri</option>
+                <option value="Fen Bilimleri">Fen Bilimleri</option>
+                <option value="Sosyal Bilimler">Sosyal Bilimler</option>
+                <option value="Deneme Analizi">Deneme Analizi</option>
+              </select>
+            </div>
+            <div class="form-group col-span-2">
+              <label class="form-label">Açıklama / Koç Notu</label>
+              <textarea id="taskNote" class="form-textarea" rows="2" placeholder="Öğrencinin dikkat etmesi gereken detaylar, kaynak kitap vb..."></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalTask">Vazgeç</button>
+        <button class="btn btn-primary" id="btnSaveTask">Görevi Ata</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 8: VERİ YEDEKLEME, GERİ YÜKLEME VE DIŞA AKTARMA -->
+  <div class="modal-overlay" id="modalBackupRestore">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>💾 Veri Yedekleme, Geri Yükleme ve Dışa Aktarma</h3>
+        <button class="modal-close-btn" data-close="modalBackupRestore">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: 700; font-size: 14px; color: var(--text-main); margin-bottom: 6px;">1. Tam Sistem Yedeklemesi (JSON)</div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+            Öğretmenler, öğrenciler, deneme sınavları, soru takip çizelgeleri, devamsızlıklar ve görevler dahil tüm sistemi tek tıkla bilgisayarınıza yedekleyin veya eski bir yedeği geri yükleyin.
+          </p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnDownloadBackup" style="flex: 1; min-width: 180px;">
+              📥 Tam Yedek İndir (JSON)
+            </button>
+            <button class="btn btn-secondary" id="btnTriggerRestore" style="flex: 1; min-width: 180px;">
+              📤 Yedekten Geri Yükle (JSON)
+            </button>
+            <input type="file" id="backupFileInput" accept=".json" style="display: none;">
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 18px 0;">
+
+        <div>
+          <div style="font-weight: 700; font-size: 14px; color: var(--text-main); margin-bottom: 6px;">2. Excel / Tablo Dışa Aktarma (CSV)</div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+            Verilerinizi Excel, Google E-Tablolar veya Numbers programında doğrudan açabileceğiniz Türkçe karakter destekli UTF-8 CSV formatında indirin.
+          </p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+            <button class="btn btn-secondary" id="btnExportExamsCSV" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 12px;">
+              📊 Denemeleri İndir (.csv)
+            </button>
+            <button class="btn btn-secondary" id="btnExportQuestionsCSV" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 12px;">
+              📝 Soru Kayıtlarını İndir (.csv)
+            </button>
+            <button class="btn btn-secondary" id="btnExportStudentsCSV" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 12px;">
+              🎓 Öğrenci Listesini İndir (.csv)
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalBackupRestore">Kapat</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= TAILWIND 2 CSS SİLME ONAY MODALI ================= -->
   <div id="modalConfirmDelete" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-60 hidden transition-opacity duration-200" style="z-index: 99999;">
     <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all border border-gray-100 text-left">
@@ -1635,10 +1788,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=5.3"></script>
-  <script src="js/store.js?v=5.3"></script>
-  <script src="js/analytics.js?v=5.3"></script>
-  <script src="js/charts.js?v=5.3"></script>
-  <script src="js/app.js?v=5.3"></script>
+  <script src="js/models.js?v=5.4"></script>
+  <script src="js/store.js?v=5.4"></script>
+  <script src="js/analytics.js?v=5.4"></script>
+  <script src="js/charts.js?v=5.4"></script>
+  <script src="js/app.js?v=5.4"></script>
 </body>
 </html>
