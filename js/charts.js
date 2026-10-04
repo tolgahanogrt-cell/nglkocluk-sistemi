@@ -74,6 +74,26 @@ class ChartManager {
             tension: 0.2,
             hidden: true,
             pointRadius: 4
+          },
+          {
+            label: "TYT Fen",
+            data: fenNets,
+            borderColor: "#8b5cf6",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.2,
+            hidden: true,
+            pointRadius: 4
+          },
+          {
+            label: "TYT Sosyal",
+            data: sosyalNets,
+            borderColor: "#f59e0b",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.2,
+            hidden: true,
+            pointRadius: 4
           }
         ]
       },
@@ -108,7 +128,7 @@ class ChartManager {
   }
 
   // AYT Net Gelişim Çizgi Grafiği
-  static renderAytChart(canvasId, exams, targetNet) {
+  static renderAytChart(canvasId, exams, targetNet, field = "Sayısal") {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
@@ -121,34 +141,118 @@ class ChartManager {
 
     const labels = aytExams.map(e => e.name || e.date);
     const dataNets = aytExams.map(e => e.totalNet);
+    const matNets = aytExams.map(e => e.ayt?.matematik?.net || 0);
+
+    const isEa = field === "Eşit Ağırlık" || aytExams.some(e => e.ayt?.edebiyat !== undefined);
+
+    const datasets = [
+      {
+        label: "Toplam AYT Neti",
+        data: dataNets,
+        borderColor: "#059669",
+        backgroundColor: "rgba(5, 150, 105, 0.12)",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: "#059669",
+        pointRadius: 6,
+        pointHoverRadius: 8
+      },
+      {
+        label: "Hedef Net (" + targetNet + ")",
+        data: Array(labels.length).fill(targetNet),
+        borderColor: "#ef4444",
+        borderDash: [6, 6],
+        borderWidth: 2,
+        fill: false,
+        pointRadius: 0
+      },
+      {
+        label: "AYT Matematik",
+        data: matNets,
+        borderColor: "#0284c7",
+        borderWidth: 2,
+        fill: false,
+        tension: 0.2,
+        hidden: true,
+        pointRadius: 4
+      }
+    ];
+
+    if (isEa) {
+      datasets.push(
+        {
+          label: "Edebiyat",
+          data: aytExams.map(e => e.ayt?.edebiyat?.net || 0),
+          borderColor: "#d97706",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        },
+        {
+          label: "Tarih-1",
+          data: aytExams.map(e => e.ayt?.tarih1?.net || 0),
+          borderColor: "#dc2626",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        },
+        {
+          label: "Coğrafya-1",
+          data: aytExams.map(e => e.ayt?.cografya1?.net || 0),
+          borderColor: "#14b8a6",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        }
+      );
+    } else {
+      // Sayısal (Varsayılan Fen Lisesi)
+      datasets.push(
+        {
+          label: "AYT Fizik",
+          data: aytExams.map(e => e.ayt?.fizik?.net || 0),
+          borderColor: "#f59e0b",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        },
+        {
+          label: "AYT Kimya",
+          data: aytExams.map(e => e.ayt?.kimya?.net || 0),
+          borderColor: "#ec4899",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        },
+        {
+          label: "AYT Biyoloji",
+          data: aytExams.map(e => e.ayt?.biyoloji?.net || 0),
+          borderColor: "#8b5cf6",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          hidden: true,
+          pointRadius: 4
+        }
+      );
+    }
 
     this.instances[canvasId] = new Chart(ctx, {
       type: "line",
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: "Toplam AYT Neti",
-            data: dataNets,
-            borderColor: "#059669",
-            backgroundColor: "rgba(5, 150, 105, 0.12)",
-            borderWidth: 3,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: "#059669",
-            pointRadius: 6,
-            pointHoverRadius: 8
-          },
-          {
-            label: "Hedef Net (" + targetNet + ")",
-            data: Array(labels.length).fill(targetNet),
-            borderColor: "#ef4444",
-            borderDash: [6, 6],
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,
