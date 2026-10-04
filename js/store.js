@@ -7,15 +7,16 @@ class AppStore {
     this.data = this.loadFromStorage();
     this.authRole = sessionStorage.getItem("kocluk_auth_role") || null; // 'admin' | 'teacher' | 'student'
     this.currentUser = JSON.parse(sessionStorage.getItem("kocluk_auth_user") || "null");
-    this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : null);
-    const initialStudent = (this.data.students || []).find(s => s.id === this.activeStudentId) || (this.data.students || [])[0];
-    if (initialStudent) {
-      this.filterGrade = initialStudent.grade ? initialStudent.grade.replace(/[^\d]/g, "") : "12";
-      this.filterSection = initialStudent.section || "A";
-      this.activeStudentId = initialStudent.id;
+    if (this.authRole === "student" && this.currentUser) {
+      this.activeStudentId = this.currentUser.id;
+      const curStudent = (this.data.students || []).find(s => s.id === this.currentUser.id);
+      this.filterGrade = curStudent && curStudent.grade ? curStudent.grade.replace(/[^\d]/g, "") : "";
+      this.filterSection = curStudent ? curStudent.section : "";
     } else {
-      this.filterGrade = "12";
-      this.filterSection = "A";
+      // Sayfa ilk açıldığında Sınıf ve Şube seçilmemiş olarak gelsin (0 durumu)
+      this.activeStudentId = null;
+      this.filterGrade = "";
+      this.filterSection = "";
     }
   }
 
@@ -39,6 +40,9 @@ class AppStore {
     if (norm(username) === norm(admin.username) && password === admin.password) {
       this.authRole = "admin";
       this.currentUser = { role: "admin", name: admin.name, username: admin.username, title: admin.title };
+      this.activeStudentId = null;
+      this.filterGrade = "";
+      this.filterSection = "";
       sessionStorage.setItem("kocluk_auth_role", "admin");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
       return { success: true, user: this.currentUser };
@@ -72,14 +76,11 @@ class AppStore {
     if (teacher) {
       this.authRole = "teacher";
       this.currentUser = { role: "teacher", id: teacher.id, name: teacher.name, branch: teacher.branch, username: teacher.username };
+      this.activeStudentId = null;
+      this.filterGrade = "";
+      this.filterSection = "";
       sessionStorage.setItem("kocluk_auth_role", "teacher");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
-      
-      // İlk öğrencisini seç
-      const teacherStudents = this.getStudents();
-      if (teacherStudents.length > 0) {
-        this.activeStudentId = teacherStudents[0].id;
-      }
       return { success: true, user: this.currentUser };
     }
     return { success: false, message: "Öğretmen kullanıcı adı veya şifresi hatalı!" };
@@ -104,6 +105,9 @@ class AppStore {
   logout() {
     this.authRole = null;
     this.currentUser = null;
+    this.activeStudentId = null;
+    this.filterGrade = "";
+    this.filterSection = "";
     sessionStorage.removeItem("kocluk_auth_role");
     sessionStorage.removeItem("kocluk_auth_user");
   }
