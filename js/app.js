@@ -33,11 +33,7 @@ class App {
 
     this.updateSidebarUserInfo();
 
-    if (role === "admin") {
-      if (this.currentTab !== "admin") {
-        this.switchTab("admin");
-      }
-    } else if (role === "teacher") {
+    if (role === "teacher") {
       // Öğretmen admin sekmesinde ASLA kalamaz!
       if (this.currentTab === "admin") {
         this.switchTab("dashboard");
@@ -150,7 +146,7 @@ class App {
       const res = window.store.loginAdmin(u, p);
       if (res.success) {
         this.checkAuth();
-        this.switchTab("admin");
+        this.switchTab("dashboard");
         this.showToast("Sistem Yöneticisi Girişi Başarılı!", "success");
       } else {
         alert(res.message);
@@ -169,11 +165,36 @@ class App {
       });
     });
 
-    // 5. Öğrenci Seçici
+    // 5. Öğrenci Seçiciler ve Filtreleme Dinleyicileri
     document.getElementById("studentSelect")?.addEventListener("change", (e) => {
       window.store.setActiveStudent(e.target.value);
       this.refreshAll();
-      this.showToast("Öğrenci profili değiştirildi: " + window.store.getActiveStudent().name, "info");
+      const active = window.store.getActiveStudent();
+      if (active) this.showToast("Öğrenci profili değiştirildi: " + active.name, "info");
+    });
+
+    document.getElementById("dashStudentSelect")?.addEventListener("change", (e) => {
+      if (e.target.value) {
+        window.store.setActiveStudent(e.target.value);
+        this.refreshAll();
+        const active = window.store.getActiveStudent();
+        if (active) this.showToast("Öğrenci profili seçildi: " + active.name, "info");
+      }
+    });
+
+    document.getElementById("filterGrade")?.addEventListener("change", () => {
+      this.renderStudentSelector();
+      this.refreshAll();
+    });
+
+    document.getElementById("filterSection")?.addEventListener("change", () => {
+      this.renderStudentSelector();
+      this.refreshAll();
+    });
+
+    document.getElementById("filterStudentName")?.addEventListener("input", () => {
+      this.renderStudentSelector();
+      this.refreshAll();
     });
 
     // 6. Hızlı Butonlar
@@ -329,17 +350,86 @@ class App {
   }
 
   renderStudentSelector() {
-    const select = document.getElementById("studentSelect");
-    if (!select) return;
-    select.innerHTML = "";
-    const students = window.store.getStudents();
-    students.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.id;
-      opt.textContent = `${s.name} (${s.field})`;
-      if (s.id === window.store.activeStudentId) opt.selected = true;
-      select.appendChild(opt);
+    const role = window.store.getRole();
+    if (role === "student") return;
+
+    const allStudents = window.store.getStudents();
+    
+    // Filtre Değerleri
+    const gradeFilter = document.getElementById("filterGrade")?.value || "";
+    const sectionFilter = document.getElementById("filterSection")?.value || "";
+    const nameSearch = (document.getElementById("filterStudentName")?.value || "").toLowerCase().trim();
+
+    // Filtreleme mantığı
+    const filtered = allStudents.filter(s => {
+      // Sınıf Filtresi
+      if (gradeFilter) {
+        const sGrade = (s.grade || "").toLowerCase();
+        if (gradeFilter === "Mezun") {
+          if (!sGrade.includes("mezun")) return false;
+        } else {
+          if (!sGrade.includes(gradeFilter)) return false;
+        }
+      }
+      // Şube Filtresi
+      if (sectionFilter) {
+        const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
+        if (sSec && sSec.toUpperCase() !== sectionFilter.toUpperCase()) return false;
+      }
+      // İsim Filtresi
+      if (nameSearch) {
+        if (!s.name.toLowerCase().includes(nameSearch)) return false;
+      }
+      return true;
     });
+
+    const activeId = window.store.activeStudentId;
+
+    // 1. Sidebar Seçiciyi Doldur
+    const sidebarSelect = document.getElementById("studentSelect");
+    if (sidebarSelect) {
+      sidebarSelect.innerHTML = "";
+      allStudents.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        const sSec = s.section ? ` - ${s.section} Şubesi` : "";
+        opt.textContent = `${s.name} (${s.grade || ''}${sSec} • ${s.field})`;
+        if (s.id === activeId) opt.selected = true;
+        sidebarSelect.appendChild(opt);
+      });
+    }
+
+    // 2. Dashboard Filtre Seçicisini Doldur
+    const dashSelect = document.getElementById("dashStudentSelect");
+    const countBadge = document.getElementById("filterStudentCountBadge");
+    if (dashSelect) {
+      dashSelect.innerHTML = "";
+      if (filtered.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Kriterlere uygun öğrenci bulunamadı";
+        dashSelect.appendChild(opt);
+      } else {
+        filtered.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          const sSec = s.section ? ` - ${s.section} Şubesi` : "";
+          opt.textContent = `${s.name} (${s.grade || ''}${sSec} | ${s.field})`;
+          if (s.id === activeId) opt.selected = true;
+          dashSelect.appendChild(opt);
+        });
+
+        // Eğer seçili öğrenci filtre sonucunda yoksa, ilk öğrenciyi seç
+        const isCurrentInFiltered = filtered.some(s => s.id === activeId);
+        if (!isCurrentInFiltered && filtered.length > 0) {
+          window.store.setActiveStudent(filtered[0].id);
+        }
+      }
+    }
+
+    if (countBadge) {
+      countBadge.textContent = `${filtered.length} / ${allStudents.length} Öğrenci`;
+    }
   }
 
   renderTeachersTable() {
@@ -476,7 +566,7 @@ class App {
           </div>
         </td>
         <td><span class="badge badge-primary">${s.field}</span></td>
-        <td><span class="badge badge-outline">${s.grade}</span></td>
+        <td><span class="badge badge-outline">${s.grade}${s.section ? ' (' + s.section + ' Şubesi)' : ''}</span></td>
         <td>
           <code>${s.username}</code>
           ${prevCreds}
@@ -566,7 +656,8 @@ class App {
   renderHeroCard(student) {
     document.getElementById("heroName").textContent = student.name;
     document.getElementById("heroField").textContent = student.field;
-    document.getElementById("heroGrade").textContent = student.grade;
+    const secStr = student.section ? ` (${student.section} Şubesi)` : "";
+    document.getElementById("heroGrade").textContent = `${student.grade}${secStr}`;
     document.getElementById("heroTarget").textContent = `${student.targetUniversity} - ${student.targetDepartment}`;
     document.getElementById("heroTargetNets").textContent = `Hedef: TYT ${student.targetTytNet} Net | AYT ${student.targetAytNet} Net`;
 
@@ -1163,6 +1254,7 @@ class App {
       password: password,
       field: document.getElementById("stdField").value,
       grade: document.getElementById("stdGrade").value,
+      section: document.getElementById("stdSection") ? document.getElementById("stdSection").value : "A",
       targetUniversity: document.getElementById("stdTargetUni").value,
       targetDepartment: document.getElementById("stdTargetDept").value,
       targetTytNet: document.getElementById("stdTargetTyt").value,
