@@ -131,8 +131,8 @@
             <option value="E">E Şubesi</option>
           </select>
         </div>
-        <select id="studentSelect" class="student-select">
-          <!-- Dinamik doldurulacak -->
+        <select id="studentSelect" class="student-select" disabled>
+          <option value="" disabled selected>Önce Sınıf ve Şube Seçiniz...</option>
         </select>
       </div>
 
@@ -333,7 +333,7 @@
                 <div>
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <strong style="font-size: 14px; color: var(--text-main);">Öğrenci Seçimi ve Filtreleme</strong>
-                    <span class="badge badge-primary" id="filterStudentCountBadge" style="font-size: 11px;">Tüm Öğrenciler</span>
+                    <span class="badge badge-outline" id="filterStudentCountBadge" style="font-size: 11px;">Sınıf ve Şube Seçiniz</span>
                   </div>
                   <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sınıf ve şube seçerek öğrencinin tüm başarı ve koçluk verilerini görüntüleyin</div>
                 </div>
@@ -368,8 +368,8 @@
                 <!-- Öğrenci Seçim Listesi -->
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <label for="dashStudentSelect" style="font-size: 12px; font-weight: 700; color: var(--primary);">Öğrenci:</label>
-                  <select id="dashStudentSelect" class="form-select" style="padding: 6px 12px; font-size: 13px; font-weight: 600; border-color: var(--primary); min-width: 200px; max-width: 280px;">
-                    <!-- JS ile dinamik doldurulacak -->
+                  <select id="dashStudentSelect" class="form-select" disabled style="padding: 6px 12px; font-size: 13px; font-weight: 600; border-color: var(--primary); min-width: 200px; max-width: 280px;">
+                    <option value="" disabled selected>Önce Sınıf ve Şube Seçiniz...</option>
                   </select>
                 </div>
 
@@ -389,21 +389,21 @@
         <!-- Öğrenci Kartı -->
         <div class="student-hero-card" id="studentHeroCard">
           <div class="student-hero-profile">
-            <div class="student-avatar" id="heroAvatar">ZK</div>
+            <div class="student-avatar" id="heroAvatar" style="background: #94a3b8;">👤</div>
             <div class="student-hero-details">
-              <h2 id="heroName">Zeynep Kaya</h2>
+              <h2 id="heroName">Sınıf ve Şube Seçiniz</h2>
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <span class="badge badge-primary" id="heroField">Sayısal</span>
-                <span class="badge badge-outline" id="heroGrade">12. Sınıf</span>
-                <span class="badge badge-success" id="heroExamCount">4 TYT / 2 AYT</span>
+                <span class="badge badge-outline" id="heroField">-</span>
+                <span class="badge badge-outline" id="heroGrade">-</span>
+                <span class="badge badge-outline" id="heroExamCount">0 TYT / 0 AYT</span>
               </div>
             </div>
           </div>
           <div class="student-hero-target">
             <div class="target-label">Hedef Üniversite ve Bölüm</div>
-            <div class="target-value" id="heroTarget">Boğaziçi Üniversitesi - Bilgisayar Mühendisliği</div>
+            <div class="target-value" id="heroTarget">Öğrenci verilerini ve başarı grafiklerini görüntülemek için lütfen yukarıdan Sınıf ve Şube seçiniz.</div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;" id="heroTargetNets">
-              Hedef: TYT 105 Net | AYT 72 Net
+              Hedef: TYT 0 Net | AYT 0 Net
             </div>
           </div>
         </div>
@@ -411,11 +411,11 @@
         <!-- Durum ve Gelişim Özeti -->
         <div style="background: white; border-left: 4px solid var(--primary); padding: 16px 20px; border-radius: var(--radius-sm); margin-bottom: 20px; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
           <div style="margin-bottom: 6px;" id="dashAnalysisBadge">
-            <span class="badge badge-success">Gelişim Durumu Hesaplanıyor</span>
+            <span class="badge badge-outline">Sınıf ve Şube Seçiniz</span>
           </div>
           <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Rehberlik Değerlendirme Özeti:</div>
           <div id="dashAnalysisMainTip" style="font-weight: 600; font-size: 14px; color: var(--text-main);">
-            Öğrenci deneme sınavlarında hedefe kararlı bir şekilde ilerlemektedir.
+            Grafik ve analizlerin görüntülenmesi için lütfen yukarıdan Sınıf ve Şube seçiniz.
           </div>
         </div>
 
@@ -426,9 +426,9 @@
               <span class="kpi-title">Son TYT Neti</span>
               <div class="badge badge-primary">TYT</div>
             </div>
-            <div class="kpi-val" id="kpiLastTyt">103.75</div>
+            <div class="kpi-val" id="kpiLastTyt">0 Net</div>
             <div class="kpi-footer" id="kpiTytTrend">
-              <span class="trend-up">+6.75 Net</span> <span style="color:var(--text-muted);">(Hedefe göre)</span>
+              <span style="color:var(--text-muted);">-</span>
             </div>
           </div>
 
@@ -437,9 +437,9 @@
               <span class="kpi-title">Son AYT Neti</span>
               <div class="badge badge-success">AYT</div>
             </div>
-            <div class="kpi-val" id="kpiLastAyt">65.25</div>
+            <div class="kpi-val" id="kpiLastAyt">0 Net</div>
             <div class="kpi-footer" id="kpiAytTrend">
-              <span class="trend-up">+10.0 Net</span> <span style="color:var(--text-muted);">(Hedefe göre)</span>
+              <span style="color:var(--text-muted);">-</span>
             </div>
           </div>
 
@@ -448,12 +448,12 @@
               <span class="kpi-title">Haftalık Soru Kotası</span>
               <div class="badge badge-warning">SORU</div>
             </div>
-            <div class="kpi-val" id="kpiWeeklyQuestions">845 / 1400</div>
+            <div class="kpi-val" id="kpiWeeklyQuestions">0 / 0</div>
             <div class="progress-bar-bg">
-              <div class="progress-bar-fill" id="kpiWeeklyProgressFill" style="width: 60%; background: var(--primary);"></div>
+              <div class="progress-bar-fill" id="kpiWeeklyProgressFill" style="width: 0%; background: var(--primary);"></div>
             </div>
             <div class="kpi-footer" id="kpiWeeklyPct">
-              <span>%60 Tamamlandı</span>
+              <span>%0 Tamamlandı (0 Toplam)</span>
             </div>
           </div>
 
@@ -462,9 +462,9 @@
               <span class="kpi-title">Ders Devamsızlığı</span>
               <div class="badge badge-danger">DEVAM</div>
             </div>
-            <div class="kpi-val" id="kpiAttendanceRate">2 Gün</div>
+            <div class="kpi-val" id="kpiAttendanceRate">0 Kayıt</div>
             <div class="kpi-footer" id="kpiAttendanceDetails">
-              <span>Toplam 12 Ders Saati</span>
+              <span>Toplam 0 Ders Saati</span>
             </div>
           </div>
         </div>
@@ -1547,10 +1547,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=5.0"></script>
-  <script src="js/store.js?v=5.0"></script>
-  <script src="js/analytics.js?v=5.0"></script>
-  <script src="js/charts.js?v=5.0"></script>
-  <script src="js/app.js?v=5.0"></script>
+  <script src="js/models.js?v=5.1"></script>
+  <script src="js/store.js?v=5.1"></script>
+  <script src="js/analytics.js?v=5.1"></script>
+  <script src="js/charts.js?v=5.1"></script>
+  <script src="js/app.js?v=5.1"></script>
 </body>
 </html>
