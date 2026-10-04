@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4.8">
+  <link rel="stylesheet" href="css/style.css?v=4.9">
 </head>
 <body>
 
@@ -114,14 +114,14 @@
         <!-- Sınıf ve Şube Seçimi (Önce Sınıf Sonra Şube) -->
         <div class="sidebar-filter-row" style="display: flex; gap: 6px; margin-bottom: 8px;">
           <select id="sidebarGradeSelect" class="form-select" style="flex: 1; padding: 6px 6px; font-size: 11px; font-weight: 600;">
-            <option value="">Tüm Sınıflar</option>
+            <option value="">Sınıf Seçiniz</option>
             <option value="12">12. Sınıf</option>
             <option value="11">11. Sınıf</option>
             <option value="10">10. Sınıf</option>
             <option value="9">9. Sınıf</option>
           </select>
           <select id="sidebarSectionSelect" class="form-select" style="flex: 1; padding: 6px 6px; font-size: 11px; font-weight: 600;">
-            <option value="">Tüm Şubeler</option>
+            <option value="">Şube Seçiniz</option>
             <option value="A">A Şubesi</option>
             <option value="B">B Şubesi</option>
             <option value="C">C Şubesi</option>
@@ -333,7 +333,7 @@
                     <strong style="font-size: 14px; color: var(--text-main);">Öğrenci Seçimi ve Filtreleme</strong>
                     <span class="badge badge-primary" id="filterStudentCountBadge" style="font-size: 11px;">Tüm Öğrenciler</span>
                   </div>
-                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sınıf, şube veya isme göre filtreleyip öğrencinin tüm başarı ve koçluk verilerini görüntüleyin</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sınıf ve şube seçerek öğrencinin tüm başarı ve koçluk verilerini görüntüleyin</div>
                 </div>
               </div>
               
@@ -342,7 +342,7 @@
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <label for="filterGrade" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Sınıf:</label>
                   <select id="filterGrade" class="form-select" style="padding: 6px 10px; font-size: 12px; width: auto; min-width: 110px;">
-                    <option value="">Tüm Sınıflar</option>
+                    <option value="">Sınıf Seçiniz</option>
                     <option value="12">12. Sınıf</option>
                     <option value="11">11. Sınıf</option>
                     <option value="10">10. Sınıf</option>
@@ -354,18 +354,13 @@
                 <div style="display: flex; align-items: center; gap: 6px;">
                   <label for="filterSection" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Şube:</label>
                   <select id="filterSection" class="form-select" style="padding: 6px 10px; font-size: 12px; width: auto; min-width: 90px;">
-                    <option value="">Tüm Şubeler</option>
+                    <option value="">Şube Seçiniz</option>
                     <option value="A">A Şubesi</option>
                     <option value="B">B Şubesi</option>
                     <option value="C">C Şubesi</option>
                     <option value="D">D Şubesi</option>
                     <option value="E">E Şubesi</option>
                   </select>
-                </div>
-
-                <!-- İsim Arama -->
-                <div style="position: relative;">
-                  <input type="text" id="filterStudentName" class="form-input" placeholder="🔍 İsimle ara..." style="padding: 6px 12px; font-size: 12px; width: 140px;">
                 </div>
 
                 <!-- Öğrenci Seçim Listesi -->
@@ -1525,10 +1520,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=4.8"></script>
-  <script src="js/store.js?v=4.8"></script>
-  <script src="js/analytics.js?v=4.8"></script>
-  <script src="js/charts.js?v=4.8"></script>
-  <script src="js/app.js?v=4.8"></script>
+  <script src="js/models.js?v=4.9"></script>
+  <script src="js/store.js?v=4.9"></script>
+  <script src="js/analytics.js?v=4.9"></script>
+  <script src="js/charts.js?v=4.9"></script>
+  <script src="js/app.js?v=4.9"></script>
 </body>
 </html>
