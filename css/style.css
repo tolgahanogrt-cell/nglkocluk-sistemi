@@ -629,6 +629,125 @@ body.role-teacher .admin-only {
   background: var(--bg-card-hover);
 }
 
+/* Soru Takip Çizelgesi - Daraltılmış / Kompakt Tablo */
+.data-table.compact-table th {
+  padding: 6px 10px;
+  font-size: 11px;
+  background: #f8fafc;
+}
+
+.data-table.compact-table td {
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.data-table.compact-table tr:hover td {
+  background: #f1f5f9;
+}
+
+.data-table.compact-table .btn-sm {
+  padding: 2px 7px;
+  font-size: 11px;
+  gap: 3px;
+  border-radius: 4px;
+}
+
+/* Soru Takip - Branş / Ders Özet Kartları Izgarası */
+.subject-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.subject-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border-top-width: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.subject-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.subject-summary-card.active {
+  border-color: var(--primary) !important;
+  background: #eff6ff !important;
+  box-shadow: 0 0 0 2px var(--primary), 0 4px 12px rgba(29, 78, 216, 0.15) !important;
+}
+
+.subject-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.subject-card-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 115px;
+}
+
+.subject-card-count {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.subject-card-count span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.subject-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border-color);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+.btn-period {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 600;
+}
+
+.btn-period:hover {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.btn-period.active {
+  background: var(--primary) !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
 /* Grafikler */
 .charts-grid {
   display: grid;
