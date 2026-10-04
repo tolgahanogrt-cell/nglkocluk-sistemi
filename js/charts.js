@@ -8,6 +8,9 @@ class ChartManager {
       this.instances[id].destroy();
       delete this.instances[id];
     }
+    // Önceki dönemden kalan "veri bulunmuyor" yazısını temizle
+    const cv = document.getElementById(id);
+    cv?.parentElement?.querySelectorAll(".chart-empty-msg").forEach(el => el.remove());
   }
 
   static MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
