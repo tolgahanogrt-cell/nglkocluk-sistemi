@@ -79,12 +79,25 @@ class AppStore {
     sessionStorage.removeItem("kocluk_auth_user");
   }
 
-  // --- Veri Depolama ---
   loadFromStorage() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.students) {
+          parsed.students.forEach(s => {
+            if (!s.section) {
+              if (s.grade && s.grade.includes("-")) {
+                s.section = s.grade.split("-")[1].trim();
+              } else if (s.name && s.name.includes("Emir")) {
+                s.section = "B";
+              } else {
+                s.section = "A";
+              }
+            }
+          });
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn("Veri okunamadı:", e);
@@ -206,6 +219,7 @@ class AppStore {
       password: (studentData.password || "123").trim(),
       field: studentData.field || "Sayısal",
       grade: studentData.grade || "12. Sınıf",
+      section: studentData.section || "A",
       targetUniversity: studentData.targetUniversity || "Hedef Üniversite",
       targetDepartment: studentData.targetDepartment || "Hedef Bölüm",
       targetTytNet: Number(studentData.targetTytNet) || 90,
