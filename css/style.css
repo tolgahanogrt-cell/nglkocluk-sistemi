@@ -916,6 +916,59 @@ body.role-teacher .admin-only {
   font-weight: 600;
 }
 
+/* --- ROL BAZLI GÖRÜNÜRLÜK KURALLARI --- */
+.admin-only,
+.teacher-only,
+.student-only {
+  display: none !important;
+}
+
+/* 1. SİSTEM YÖNETİCİSİ */
+body.role-admin .admin-only {
+  display: block !important;
+}
+body.role-admin .nav-item.admin-only,
+body.role-admin .btn.admin-only {
+  display: flex !important;
+}
+body.role-admin .teacher-only,
+body.role-admin .student-only,
+body.role-admin #page-students {
+  display: none !important;
+}
+
+/* 2. ÖĞRETMEN / KOÇ */
+body.role-teacher .teacher-only {
+  display: block !important;
+}
+body.role-teacher .nav-item.teacher-only,
+body.role-teacher .btn.teacher-only {
+  display: flex !important;
+}
+body.role-teacher .student-selector-box.teacher-only {
+  display: block !important;
+}
+body.role-teacher .admin-only,
+body.role-teacher #page-admin {
+  display: none !important;
+}
+
+/* 3. ÖĞRENCİ */
+body.role-student .student-only {
+  display: block !important;
+}
+body.role-student .nav-item.student-only,
+body.role-student .btn.student-only {
+  display: flex !important;
+}
+body.role-student .admin-only,
+body.role-student .teacher-only,
+body.role-student #page-admin,
+body.role-student #page-students,
+body.role-student #sidebarStudentSelectorBox {
+  display: none !important;
+}
+
 @media print {
   body {
     background: white !important;
