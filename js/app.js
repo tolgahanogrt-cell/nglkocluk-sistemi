@@ -593,20 +593,11 @@ class App {
     }
 
     teachers.forEach(t => {
-      const prevCreds = (t.previousCredentials && t.previousCredentials.length > 0)
-        ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px; padding:3px 6px; background:var(--bg-main); border-radius:4px; border:1px dashed var(--border-color);">
-            <strong style="color:var(--text-main);">Önceki:</strong> <code>${t.previousCredentials[0].username}</code> / <code>${t.previousCredentials[0].password}</code>
-            <span style="font-size:10px; display:block; color:var(--text-muted);">${t.previousCredentials[0].changedAt || ''}</span>
-           </div>`
-        : '';
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><strong>${t.name}</strong></td>
         <td><span class="badge badge-primary">${t.branch}</span></td>
-        <td>
-          <code>${t.username}</code>
-          ${prevCreds}
-        </td>
+        <td><code>${t.username}</code></td>
         <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${t.password}</code></td>
         <td>${t.email || "-"}</td>
         <td>${AnalyticsEngine.formatDateTurkish(t.createdAt)}</td>
@@ -665,23 +656,6 @@ class App {
     document.getElementById("editTeacherUsername").value = teacher.username;
     document.getElementById("editTeacherPassword").value = teacher.password;
 
-    const histContainer = document.getElementById("teacherCredentialsHistory");
-    if (histContainer) {
-      if (!teacher.previousCredentials || teacher.previousCredentials.length === 0) {
-        histContainer.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">Henüz geçmiş kullanıcı adı / şifre değişikliği kaydı bulunmamaktadır.</span>`;
-      } else {
-        histContainer.innerHTML = teacher.previousCredentials.map((h, i) => `
-          <div style="padding: 6px 0; border-bottom: 1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong>Kullanıcı Adı:</strong> <code>${h.username}</code> &nbsp;|&nbsp; 
-              <strong>Şifre:</strong> <code>${h.password}</code>
-            </div>
-            <span style="font-size:11px; color:var(--text-muted);">${h.changedAt || ''}</span>
-          </div>
-        `).join("");
-      }
-    }
-
     this.openModal("modalEditTeacherCredentials");
   }
 
@@ -732,12 +706,6 @@ class App {
       const tr = document.createElement("tr");
       const isCurrent = s.id === window.store.activeStudentId;
       const initials = s.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-      const prevCreds = (s.previousCredentials && s.previousCredentials.length > 0)
-        ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px; padding:3px 6px; background:var(--bg-main); border-radius:4px; border:1px dashed var(--border-color);">
-            <strong style="color:var(--text-main);">Önceki:</strong> <code>${s.previousCredentials[0].username}</code> / <code>${s.previousCredentials[0].password}</code>
-            <span style="font-size:10px; display:block; color:var(--text-muted);">${s.previousCredentials[0].changedAt || ''}</span>
-           </div>`
-        : '';
 
       tr.innerHTML = `
         <td>
@@ -753,10 +721,7 @@ class App {
         </td>
         <td><span class="badge badge-primary">${s.field}</span></td>
         <td><span class="badge badge-outline">${s.grade}${s.section ? ' (' + s.section + ' Şubesi)' : ''}</span></td>
-        <td>
-          <code>${s.username}</code>
-          ${prevCreds}
-        </td>
+        <td><code>${s.username}</code></td>
         <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${s.password}</code></td>
         <td><span style="font-size:12px; color:var(--text-main);">${s.targetUniversity || '-'} - ${s.targetDepartment || '-'}</span></td>
         <td><span style="font-size:12px; font-weight:600; color:var(--primary);">TYT: ${s.targetTytNet || '-'} | AYT: ${s.targetAytNet || '-'}</span></td>
@@ -810,23 +775,6 @@ class App {
     if (fieldEl) fieldEl.value = student.field || "Sayısal";
     document.getElementById("editStudentUsername").value = student.username;
     document.getElementById("editStudentPassword").value = student.password;
-
-    const histContainer = document.getElementById("studentCredentialsHistory");
-    if (histContainer) {
-      if (!student.previousCredentials || student.previousCredentials.length === 0) {
-        histContainer.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">Henüz geçmiş kullanıcı adı / şifre değişikliği kaydı bulunmamaktadır.</span>`;
-      } else {
-        histContainer.innerHTML = student.previousCredentials.map((h, i) => `
-          <div style="padding: 6px 0; border-bottom: 1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <strong>Kullanıcı Adı:</strong> <code>${h.username}</code> &nbsp;|&nbsp; 
-              <strong>Şifre:</strong> <code>${h.password}</code>
-            </div>
-            <span style="font-size:11px; color:var(--text-muted);">${h.changedAt || ''}</span>
-          </div>
-        `).join("");
-      }
-    }
 
     this.openModal("modalEditStudentCredentials");
   }
