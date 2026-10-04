@@ -65,11 +65,11 @@ class App {
     }
 
     if (role === "admin") {
-      if (titleEl) titleEl.textContent = "Yönetici Hesabı";
+      if (titleEl) titleEl.textContent = user.title || "Yönetici Hesabı";
       if (userNameEl) userNameEl.textContent = user.name || "Sistem Yöneticisi";
       if (avatarEl) {
         avatarEl.style.background = "var(--primary)";
-        avatarEl.textContent = "SY";
+        avatarEl.textContent = (user.name || "SY").split(" ").map(w => w[0]).join("").toLocaleUpperCase("tr").slice(0, 2);
       }
       if (roleBadgeEl) {
         roleBadgeEl.className = "badge badge-primary";
@@ -325,8 +325,39 @@ class App {
       inp.addEventListener("input", () => this.calculateExamLiveNets());
     });
 
+    document.getElementById("formAdminProfile")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleSaveAdminProfile();
+    });
+
     // 11. PDF / Yazdır Butonu
     document.getElementById("btnPrintKarneAction")?.addEventListener("click", () => this.printKarne());
+  }
+
+  renderAdminProfile() {
+    const a = window.store.getAdminProfile();
+    document.getElementById("profileName").value = a.name || "";
+    document.getElementById("profileTitle").value = a.title || "";
+    document.getElementById("profileUsername").value = a.username || "";
+    document.getElementById("profilePassword").value = a.password || "";
+  }
+
+  handleSaveAdminProfile() {
+    const v = (id) => document.getElementById(id).value.trim();
+    if (!v("profileName") || !v("profileTitle") || !v("profileUsername") || !v("profilePassword")) {
+      this.showToast("Lütfen tüm profil alanlarını doldurunuz.", "error");
+      return;
+    }
+    const res = window.store.updateAdminProfile({
+      name: v("profileName"), title: v("profileTitle"),
+      username: v("profileUsername"), password: v("profilePassword")
+    });
+    if (res.success) {
+      this.updateSidebarUserInfo();
+      this.showToast("Profil bilgileri güncellendi.", "success");
+    } else {
+      this.showToast(res.message, "error");
+    }
   }
 
   switchAuthTab(tab) {
@@ -353,7 +384,7 @@ class App {
   // --- Sekme Yöneticisi ---
   switchTab(tabId) {
     const currentRole = window.store.getRole();
-    if (tabId === "admin" && currentRole !== "admin") {
+    if ((tabId === "admin" || tabId === "profile") && currentRole !== "admin") {
       tabId = currentRole === "teacher" ? "students" : "dashboard";
     }
     if (tabId === "students" && currentRole === "student") {
@@ -373,6 +404,7 @@ class App {
     if (targetPage) targetPage.classList.add("active");
 
     const titles = {
+      profile: { title: "Profil Bilgilerim", sub: "Yönetici adı, görevi, kullanıcı adı ve şifre ayarları" },
       admin: { title: "Öğretmen ve Koç Yönetimi", sub: "Sistem yöneticisi öğretmen tanımlama ve şifre paneli" },
       students: { title: "Öğrenci Yönetimi ve Giriş Tanımlama", sub: "Koçluk yapılan öğrencileri tanımlama, kullanıcı adı, şifre ve hedef yönetimi" },
       dashboard: { title: "Genel Bakış", sub: "Öğrenci gelişim ve koçluk paneli" },
@@ -389,6 +421,8 @@ class App {
 
     if (tabId === "dashboard") {
       this.renderCharts();
+    } else if (tabId === "profile") {
+      this.renderAdminProfile();
     } else if (tabId === "admin") {
       this.renderTeachersTable();
     } else if (tabId === "students") {
