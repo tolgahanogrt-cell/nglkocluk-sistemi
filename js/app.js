@@ -497,7 +497,7 @@ class App {
     const filtered = window.store.getFilteredStudents(gradeFilter, sectionFilter, nameSearch);
     const activeId = window.store.activeStudentId || "ALL";
 
-    let gradeLabel = gradeFilter ? (gradeFilter === "Mezun" ? "Mezun" : `${gradeFilter}. Sınıf`) : "Tüm Sınıflar";
+    let gradeLabel = gradeFilter ? `${gradeFilter}. Sınıf` : "Tüm Sınıflar";
     let sectionLabel = sectionFilter ? `${sectionFilter} Şubesi` : "Tüm Şubeler";
     const allOptionText = `👥 Tüm Öğrenciler (${gradeLabel} - ${sectionLabel} Toplu)`;
 
