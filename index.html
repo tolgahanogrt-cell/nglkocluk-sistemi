@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4.0">
+  <link rel="stylesheet" href="css/style.css?v=4.1">
 </head>
 <body>
 
@@ -403,9 +403,22 @@
         <!-- Grafikler -->
         <div class="charts-grid">
           <div class="card">
-            <div class="card-header">
-              <h3>TYT Net Gelişim Çizgisi</h3>
-              <span class="badge badge-outline">Tüm Denemeler</span>
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>TYT Net Gelişim Çizgisi</h3>
+                <span class="badge badge-outline">Tüm Denemeler</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label for="tytChartSubjectFilter" style="font-size: 11px; font-weight: 600; color: var(--text-muted);">Ders Seçimi:</label>
+                <select id="tytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 140px;">
+                  <option value="summary">Özet (Toplam ve Hedef)</option>
+                  <option value="all">Tüm Dersleri Göster</option>
+                  <option value="turkce">TYT Türkçe</option>
+                  <option value="matematik">TYT Matematik</option>
+                  <option value="fen">TYT Fen Bilimleri</option>
+                  <option value="sosyal">TYT Sosyal Bilimler</option>
+                </select>
+              </div>
             </div>
             <div class="card-body">
               <div class="chart-wrapper">
@@ -415,9 +428,22 @@
           </div>
 
           <div class="card">
-            <div class="card-header">
-              <h3>AYT Net Gelişim Çizgisi</h3>
-              <span class="badge badge-outline">Alan Denemeleri</span>
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>AYT Net Gelişim Çizgisi</h3>
+                <span class="badge badge-outline">Alan Denemeleri</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label for="aytChartSubjectFilter" style="font-size: 11px; font-weight: 600; color: var(--text-muted);">Ders Seçimi:</label>
+                <select id="aytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 140px;">
+                  <option value="summary">Özet (Toplam ve Hedef)</option>
+                  <option value="all">Tüm Dersleri Göster</option>
+                  <option value="matematik">AYT Matematik</option>
+                  <option value="fizik">AYT Fizik / Edebiyat</option>
+                  <option value="kimya">AYT Kimya / Tarih</option>
+                  <option value="biyoloji">AYT Biyoloji / Coğrafya</option>
+                </select>
+              </div>
             </div>
             <div class="card-body">
               <div class="chart-wrapper">
@@ -1290,10 +1316,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=4.0"></script>
-  <script src="js/store.js?v=4.0"></script>
-  <script src="js/analytics.js?v=4.0"></script>
-  <script src="js/charts.js?v=4.0"></script>
-  <script src="js/app.js?v=4.0"></script>
+  <script src="js/models.js?v=4.1"></script>
+  <script src="js/store.js?v=4.1"></script>
+  <script src="js/analytics.js?v=4.1"></script>
+  <script src="js/charts.js?v=4.1"></script>
+  <script src="js/app.js?v=4.1"></script>
 </body>
 </html>
