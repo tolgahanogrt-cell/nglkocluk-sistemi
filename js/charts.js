@@ -11,6 +11,7 @@ class ChartManager {
   }
 
   // TYT Net Gelişim Çizgi Grafiği
+  // TYT Net Gelişim Çizgi Grafiği (Tüm TYT Dersleri Dahil)
   static renderTytChart(canvasId, exams, targetNet) {
     this.destroyChart(canvasId);
     const ctx = document.getElementById(canvasId);
@@ -28,6 +29,13 @@ class ChartManager {
     const matNets = tytExams.map(e => e.tyt?.matematik?.net || 0);
     const fenNets = tytExams.map(e => e.tyt?.fen?.net || 0);
     const sosyalNets = tytExams.map(e => e.tyt?.sosyal?.net || 0);
+
+    const filterVal = document.getElementById("tytChartSubjectFilter")?.value || "summary";
+    const isHidden = (key) => {
+      if (filterVal === "all") return false;
+      if (filterVal === "summary") return true;
+      return filterVal !== key;
+    };
 
     this.instances[canvasId] = new Chart(ctx, {
       type: "line",
@@ -56,43 +64,47 @@ class ChartManager {
             pointRadius: 0
           },
           {
-            label: "TYT Matematik",
-            data: matNets,
-            borderColor: "#0284c7",
-            borderWidth: 2,
-            fill: false,
-            tension: 0.2,
-            hidden: true,
-            pointRadius: 4
-          },
-          {
             label: "TYT Türkçe",
             data: turkceNets,
             borderColor: "#10b981",
+            backgroundColor: "#10b981",
             borderWidth: 2,
             fill: false,
             tension: 0.2,
-            hidden: true,
+            hidden: isHidden("turkce"),
             pointRadius: 4
           },
           {
-            label: "TYT Fen",
+            label: "TYT Matematik",
+            data: matNets,
+            borderColor: "#0284c7",
+            backgroundColor: "#0284c7",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.2,
+            hidden: isHidden("matematik"),
+            pointRadius: 4
+          },
+          {
+            label: "TYT Fen Bilimleri",
             data: fenNets,
             borderColor: "#8b5cf6",
+            backgroundColor: "#8b5cf6",
             borderWidth: 2,
             fill: false,
             tension: 0.2,
-            hidden: true,
+            hidden: isHidden("fen"),
             pointRadius: 4
           },
           {
-            label: "TYT Sosyal",
+            label: "TYT Sosyal Bilimler",
             data: sosyalNets,
             borderColor: "#f59e0b",
+            backgroundColor: "#f59e0b",
             borderWidth: 2,
             fill: false,
             tension: 0.2,
-            hidden: true,
+            hidden: isHidden("sosyal"),
             pointRadius: 4
           }
         ]
@@ -104,7 +116,11 @@ class ChartManager {
           legend: {
             display: true,
             position: "top",
-            labels: { boxWidth: 14, font: { family: "Inter, sans-serif", size: 12 } }
+            labels: {
+              boxWidth: 14,
+              font: { family: "Inter, sans-serif", size: 12 },
+              padding: 10
+            }
           },
           tooltip: {
             callbacks: {
@@ -145,6 +161,13 @@ class ChartManager {
 
     const isEa = field === "Eşit Ağırlık" || aytExams.some(e => e.ayt?.edebiyat !== undefined);
 
+    const filterVal = document.getElementById("aytChartSubjectFilter")?.value || "summary";
+    const isHidden = (key) => {
+      if (filterVal === "all") return false;
+      if (filterVal === "summary") return true;
+      return filterVal !== key;
+    };
+
     const datasets = [
       {
         label: "Toplam AYT Neti",
@@ -171,10 +194,11 @@ class ChartManager {
         label: "AYT Matematik",
         data: matNets,
         borderColor: "#0284c7",
+        backgroundColor: "#0284c7",
         borderWidth: 2,
         fill: false,
         tension: 0.2,
-        hidden: true,
+        hidden: isHidden("matematik"),
         pointRadius: 4
       }
     ];
@@ -185,30 +209,33 @@ class ChartManager {
           label: "Edebiyat",
           data: aytExams.map(e => e.ayt?.edebiyat?.net || 0),
           borderColor: "#d97706",
+          backgroundColor: "#d97706",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("fizik"), // Dropdown'daki 1. alan
           pointRadius: 4
         },
         {
           label: "Tarih-1",
           data: aytExams.map(e => e.ayt?.tarih1?.net || 0),
           borderColor: "#dc2626",
+          backgroundColor: "#dc2626",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("kimya"), // Dropdown'daki 2. alan
           pointRadius: 4
         },
         {
           label: "Coğrafya-1",
           data: aytExams.map(e => e.ayt?.cografya1?.net || 0),
           borderColor: "#14b8a6",
+          backgroundColor: "#14b8a6",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("biyoloji"), // Dropdown'daki 3. alan
           pointRadius: 4
         }
       );
@@ -219,30 +246,33 @@ class ChartManager {
           label: "AYT Fizik",
           data: aytExams.map(e => e.ayt?.fizik?.net || 0),
           borderColor: "#f59e0b",
+          backgroundColor: "#f59e0b",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("fizik"),
           pointRadius: 4
         },
         {
           label: "AYT Kimya",
           data: aytExams.map(e => e.ayt?.kimya?.net || 0),
           borderColor: "#ec4899",
+          backgroundColor: "#ec4899",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("kimya"),
           pointRadius: 4
         },
         {
           label: "AYT Biyoloji",
           data: aytExams.map(e => e.ayt?.biyoloji?.net || 0),
           borderColor: "#8b5cf6",
+          backgroundColor: "#8b5cf6",
           borderWidth: 2,
           fill: false,
           tension: 0.2,
-          hidden: true,
+          hidden: isHidden("biyoloji"),
           pointRadius: 4
         }
       );
@@ -261,7 +291,11 @@ class ChartManager {
           legend: {
             display: true,
             position: "top",
-            labels: { boxWidth: 14, font: { family: "Inter, sans-serif", size: 12 } }
+            labels: {
+              boxWidth: 14,
+              font: { family: "Inter, sans-serif", size: 12 },
+              padding: 10
+            }
           },
           tooltip: {
             callbacks: {
@@ -282,6 +316,60 @@ class ChartManager {
         }
       }
     });
+  }
+
+  // TYT Ders Filtresi Dinamik Tetikleyici
+  static filterTytDatasets(filterType) {
+    const chart = this.instances["chartTytDashboard"];
+    if (!chart) return;
+
+    chart.data.datasets.forEach((ds, idx) => {
+      if (idx === 0 || idx === 1) {
+        ds.hidden = false;
+        return;
+      }
+      if (filterType === "all") {
+        ds.hidden = false;
+      } else if (filterType === "summary") {
+        ds.hidden = true;
+      } else if (filterType === "turkce") {
+        ds.hidden = !ds.label.includes("Türkçe");
+      } else if (filterType === "matematik") {
+        ds.hidden = !ds.label.includes("Matematik");
+      } else if (filterType === "fen") {
+        ds.hidden = !ds.label.includes("Fen");
+      } else if (filterType === "sosyal") {
+        ds.hidden = !ds.label.includes("Sosyal");
+      }
+    });
+    chart.update();
+  }
+
+  // AYT Ders Filtresi Dinamik Tetikleyici
+  static filterAytDatasets(filterType) {
+    const chart = this.instances["chartAytDashboard"];
+    if (!chart) return;
+
+    chart.data.datasets.forEach((ds, idx) => {
+      if (idx === 0 || idx === 1) {
+        ds.hidden = false;
+        return;
+      }
+      if (filterType === "all") {
+        ds.hidden = false;
+      } else if (filterType === "summary") {
+        ds.hidden = true;
+      } else if (filterType === "matematik") {
+        ds.hidden = !ds.label.includes("Matematik");
+      } else if (filterType === "fizik") {
+        ds.hidden = !(ds.label.includes("Fizik") || ds.label.includes("Edebiyat"));
+      } else if (filterType === "kimya") {
+        ds.hidden = !(ds.label.includes("Kimya") || ds.label.includes("Tarih"));
+      } else if (filterType === "biyoloji") {
+        ds.hidden = !(ds.label.includes("Biyoloji") || ds.label.includes("Coğrafya"));
+      }
+    });
+    chart.update();
   }
 
   // Ders Bazlı Dağılım Radar / Bar Grafiği
