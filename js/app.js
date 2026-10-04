@@ -3,6 +3,8 @@
 class App {
   constructor() {
     this.currentTab = "dashboard";
+    this.questionFilterPeriod = "weekly";
+    this.questionFilterSubject = null;
     this.bindEvents();
     this.checkAuth();
   }
@@ -330,6 +332,22 @@ class App {
     // 11. PDF / Yazdır ve Karne Dönem Filtresi
     document.getElementById("btnPrintKarneAction")?.addEventListener("click", () => this.printKarne());
     document.getElementById("karnePeriodSelect")?.addEventListener("change", () => this.renderKarne());
+
+    // 12. Soru Takip Çizelgesi Dönem ve Branş Filtresi
+    document.querySelectorAll("#questionPeriodBtnGroup .btn-period").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const period = e.currentTarget.getAttribute("data-q-period");
+        this.questionFilterPeriod = period;
+        document.querySelectorAll("#questionPeriodBtnGroup .btn-period").forEach(b => b.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+        this.renderQuestionsTable();
+      });
+    });
+
+    document.getElementById("btnClearSubjectFilter")?.addEventListener("click", () => {
+      this.questionFilterSubject = null;
+      this.renderQuestionsTable();
+    });
   }
 
   renderAdminProfile() {
@@ -434,6 +452,8 @@ class App {
       this.renderStudentsTable();
     } else if (tabId === "analysis") {
       this.renderAnalysisDetails();
+    } else if (tabId === "questions") {
+      this.renderQuestionsTable();
     } else if (tabId === "karne") {
       this.renderKarne();
     }
@@ -1031,29 +1051,245 @@ class App {
     });
   }
 
-  renderQuestionsTable(student) {
+  renderQuestionsTable(student = null) {
+    student = student || window.store.getActiveStudent();
     const tbody = document.getElementById("questionsTableBody");
+    const cardsGrid = document.getElementById("questionSubjectCardsGrid");
     if (!tbody) return;
-    tbody.innerHTML = "";
 
-    const stats = AnalyticsEngine.getStudentStats(student);
-    const targetCountEl = document.getElementById("qTargetCount");
-    if (targetCountEl) targetCountEl.textContent = `${student.targetWeeklyQuestions || 1200} Soru`;
-    const solvedEl = document.getElementById("qSolvedCount");
-    if (solvedEl) solvedEl.textContent = `${stats.weeklyQuestions} soru çözüldü`;
-    const accEl = document.getElementById("qAccuracyRate");
-    if (accEl) accEl.textContent = `%${stats.accuracyRate} Doğruluk Oranı`;
-    const progEl = document.getElementById("qTargetProgressFill");
-    if (progEl) progEl.style.width = `${stats.weeklyProgressPct}%`;
-
-    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
-    const logs = (student.questionLogs || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-    if (logs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Henüz soru çözümü kaydı girilmedi.</td></tr>`;
+    if (!student) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Soru kayıtlarını görüntülemek için lütfen Sınıf ve Şube seçiniz.</td></tr>`;
+      if (cardsGrid) cardsGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">Önce öğrenci seçimi yapınız.</div>`;
+      const qCountBadge = document.getElementById("questionCardsCountBadge");
+      if (qCountBadge) qCountBadge.textContent = "0 Ders";
+      const targetCountEl = document.getElementById("qTargetCount");
+      if (targetCountEl) targetCountEl.textContent = "0 Soru";
+      const solvedEl = document.getElementById("qSolvedCount");
+      if (solvedEl) solvedEl.textContent = "0 soru çözüldü";
+      const accEl = document.getElementById("qAccuracyRate");
+      if (accEl) accEl.textContent = "%0 Doğruluk Oranı";
+      const progEl = document.getElementById("qTargetProgressFill");
+      if (progEl) progEl.style.width = "0%";
       return;
     }
 
-    logs.forEach(l => {
+    const period = this.questionFilterPeriod || "weekly";
+
+    // 1. Tarih Kapsamına Göre Filtrele (Haftalık, Aylık, Genel)
+    let refDate = new Date();
+    const allLogs = (student.questionLogs || []).slice();
+    const allTimestamps = allLogs.map(q => new Date(q.date).getTime()).filter(t => !isNaN(t));
+    if (allTimestamps.length > 0) {
+      const maxDataTime = Math.max(...allTimestamps);
+      if (refDate.getTime() < maxDataTime) {
+        refDate = new Date(maxDataTime);
+      }
+    }
+
+    let periodLogs = allLogs;
+    let periodInfo = "Son 7 Günlük Kayıtlar";
+    let periodBadgeText = "Haftalık (Son 7 Gün)";
+    let periodTargetLabel = "Haftalık Hedef:";
+    let targetQuestions = student.targetWeeklyQuestions || 1400;
+
+    if (period === "weekly") {
+      const sevenDaysAgo = new Date(refDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+      const endLimit = new Date(refDate.getTime() + 24 * 60 * 60 * 1000);
+      periodLogs = allLogs.filter(q => {
+        if (!q.date) return false;
+        const d = new Date(q.date);
+        return !isNaN(d.getTime()) && d >= sevenDaysAgo && d <= endLimit;
+      });
+      periodInfo = "Son 7 Günlük Kayıtlar ve Dağılım";
+      periodBadgeText = "Haftalık (Son 7 Gün)";
+      periodTargetLabel = "Haftalık Hedef:";
+      targetQuestions = student.targetWeeklyQuestions || 1400;
+    } else if (period === "monthly") {
+      const thirtyDaysAgo = new Date(refDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
+      const endLimit = new Date(refDate.getTime() + 24 * 60 * 60 * 1000);
+      periodLogs = allLogs.filter(q => {
+        if (!q.date) return false;
+        const d = new Date(q.date);
+        return !isNaN(d.getTime()) && d >= thirtyDaysAgo && d <= endLimit;
+      });
+      periodInfo = "Son 30 Günlük Kayıtlar ve Dağılım";
+      periodBadgeText = "Aylık (Son 30 Gün)";
+      periodTargetLabel = "Aylık Hedef (Yaklaşık):";
+      targetQuestions = (student.targetWeeklyQuestions || 1400) * 4;
+    } else if (period === "all") {
+      periodLogs = allLogs;
+      periodInfo = "Tüm Dönem Kayıtları ve Genel Dağılım";
+      periodBadgeText = "Tüm Dönem";
+      periodTargetLabel = "Dönem Toplam Hedef:";
+      targetQuestions = (student.targetWeeklyQuestions || 1400) * 16;
+    }
+
+    // Bilgi Etiketleri ve İlerleme Çubuğu Güncellemesi
+    const pInfoEl = document.getElementById("questionPeriodInfoText");
+    if (pInfoEl) pInfoEl.textContent = periodInfo;
+
+    const qTargetBadge = document.getElementById("qTargetPeriodBadge");
+    if (qTargetBadge) qTargetBadge.textContent = periodBadgeText;
+
+    const cardsActiveScope = document.getElementById("questionCardsActiveScopeBadge");
+    if (cardsActiveScope) cardsActiveScope.textContent = periodBadgeText;
+
+    const qTargetLabelEl = document.getElementById("qTargetLabel");
+    if (qTargetLabelEl) qTargetLabelEl.textContent = periodTargetLabel;
+
+    const totalPeriodQuestions = periodLogs.reduce((sum, l) => sum + (Number(l.count) || 0), 0);
+    const totalPeriodCorrect = periodLogs.reduce((sum, l) => sum + (Number(l.correct) || 0), 0);
+    const totalPeriodWrong = periodLogs.reduce((sum, l) => sum + (Number(l.wrong) || 0), 0);
+    const totalPeriodDuration = periodLogs.reduce((sum, l) => sum + (Number(l.duration) || 0), 0);
+    const overallPeriodAccuracy = totalPeriodQuestions > 0 ? Math.round((totalPeriodCorrect / totalPeriodQuestions) * 100) : 0;
+    const progressPct = targetQuestions > 0 ? Math.min(100, Math.round((totalPeriodQuestions / targetQuestions) * 100)) : 0;
+
+    const targetCountEl = document.getElementById("qTargetCount");
+    if (targetCountEl) targetCountEl.textContent = `${targetQuestions} Soru`;
+
+    const solvedEl = document.getElementById("qSolvedCount");
+    if (solvedEl) solvedEl.textContent = `${totalPeriodQuestions} soru çözüldü`;
+
+    const accEl = document.getElementById("qAccuracyRate");
+    if (accEl) accEl.textContent = `%${overallPeriodAccuracy} Doğruluk Oranı`;
+
+    const progEl = document.getElementById("qTargetProgressFill");
+    if (progEl) progEl.style.width = `${progressPct}%`;
+
+    // 2. Branş / Ders Bazlı Toplama
+    const subjectMap = {};
+    periodLogs.forEach(l => {
+      const subj = (l.subject || "Diğer").trim();
+      if (!subjectMap[subj]) {
+        subjectMap[subj] = { subject: subj, count: 0, correct: 0, wrong: 0, duration: 0 };
+      }
+      subjectMap[subj].count += Number(l.count) || 0;
+      subjectMap[subj].correct += Number(l.correct) || 0;
+      subjectMap[subj].wrong += Number(l.wrong) || 0;
+      subjectMap[subj].duration += Number(l.duration) || 0;
+    });
+
+    const subjectList = Object.values(subjectMap).sort((a, b) => b.count - a.count);
+
+    const qCountBadge = document.getElementById("questionCardsCountBadge");
+    if (qCountBadge) qCountBadge.textContent = `${subjectList.length} Farklı Ders`;
+
+    // Branş Renk Paleti Haritası
+    const getSubjectColor = (subj) => {
+      const s = (subj || "").toLowerCase();
+      if (s.includes("mat")) return "#2563eb";
+      if (s.includes("geo")) return "#0284c7";
+      if (s.includes("fiz")) return "#7c3aed";
+      if (s.includes("kim")) return "#ea580c";
+      if (s.includes("biy")) return "#059669";
+      if (s.includes("türk") || s.includes("parag")) return "#e11d48";
+      if (s.includes("edeb")) return "#db2777";
+      if (s.includes("tar")) return "#d97706";
+      if (s.includes("coğ")) return "#0d9488";
+      if (s.includes("fels") || s.includes("din")) return "#475569";
+      return "#4f46e5";
+    };
+
+    // 3. Özet Kartları Render Et
+    if (cardsGrid) {
+      cardsGrid.innerHTML = "";
+
+      // 3.1. "Tüm Dersler (Toplam)" Kartı
+      const isAllActive = !this.questionFilterSubject;
+      const allCard = document.createElement("div");
+      allCard.className = `subject-summary-card ${isAllActive ? 'active' : ''}`;
+      allCard.style.borderTopColor = "var(--primary)";
+      allCard.innerHTML = `
+        <div class="subject-card-header">
+          <span class="subject-card-name" style="color:var(--primary); font-weight:800;">📚 Tüm Dersler</span>
+          <span class="badge ${overallPeriodAccuracy >= 80 ? 'badge-success' : 'badge-primary'}" style="font-size: 10px; padding: 1px 6px;">%${overallPeriodAccuracy}</span>
+        </div>
+        <div class="subject-card-count">
+          ${totalPeriodQuestions} <span>Soru</span>
+        </div>
+        <div class="subject-card-meta">
+          <span><strong style="color:var(--secondary);">${totalPeriodCorrect}D</strong> / <strong style="color:var(--danger);">${totalPeriodWrong}Y</strong></span>
+          <span>${totalPeriodDuration > 0 ? totalPeriodDuration + ' Dk' : ''}</span>
+        </div>
+      `;
+      allCard.addEventListener("click", () => {
+        this.questionFilterSubject = null;
+        this.renderQuestionsTable(student);
+      });
+      cardsGrid.appendChild(allCard);
+
+      // 3.2. Her Bir Ders İçin Kart
+      subjectList.forEach(stat => {
+        const isSubjActive = this.questionFilterSubject && this.questionFilterSubject.toLowerCase() === stat.subject.toLowerCase();
+        const acc = stat.count > 0 ? Math.round((stat.correct / stat.count) * 100) : 0;
+        const color = getSubjectColor(stat.subject);
+
+        const card = document.createElement("div");
+        card.className = `subject-summary-card ${isSubjActive ? 'active' : ''}`;
+        card.style.borderTopColor = color;
+        card.innerHTML = `
+          <div class="subject-card-header">
+            <span class="subject-card-name" title="${stat.subject}">${stat.subject}</span>
+            <span class="badge ${acc >= 80 ? 'badge-success' : (acc >= 65 ? 'badge-primary' : 'badge-warning')}" style="font-size: 10px; padding: 1px 6px;">%${acc}</span>
+          </div>
+          <div class="subject-card-count" style="color:${color};">
+            ${stat.count} <span>Soru</span>
+          </div>
+          <div class="subject-card-meta">
+            <span><strong style="color:var(--secondary);">${stat.correct}D</strong> / <strong style="color:var(--danger);">${stat.wrong}Y</strong></span>
+            <span>${stat.duration > 0 ? stat.duration + ' Dk' : ''}</span>
+          </div>
+        `;
+        card.addEventListener("click", () => {
+          if (this.questionFilterSubject && this.questionFilterSubject.toLowerCase() === stat.subject.toLowerCase()) {
+            this.questionFilterSubject = null;
+          } else {
+            this.questionFilterSubject = stat.subject;
+          }
+          this.renderQuestionsTable(student);
+        });
+        cardsGrid.appendChild(card);
+      });
+
+      if (subjectList.length === 0) {
+        cardsGrid.innerHTML += `
+          <div style="grid-column: 2 / -1; display:flex; align-items:center; color:var(--text-muted); font-size:12px; padding:10px;">
+            Bu dönemde henüz soru kaydı bulunmuyor. Yeni kayıt ekleyebilirsiniz.
+          </div>
+        `;
+      }
+    }
+
+    // 4. Tablo Filtreleme ve Başlık Durumu
+    let displayLogs = periodLogs.slice();
+    const activeBadge = document.getElementById("activeSubjectBadge");
+    const clearBtn = document.getElementById("btnClearSubjectFilter");
+
+    if (this.questionFilterSubject) {
+      displayLogs = periodLogs.filter(l => (l.subject || "").toLowerCase() === this.questionFilterSubject.toLowerCase());
+      if (activeBadge) {
+        activeBadge.style.display = "inline-flex";
+        activeBadge.textContent = `Filtrelenen Ders: ${this.questionFilterSubject} (${displayLogs.length} Kayıt)`;
+      }
+      if (clearBtn) clearBtn.style.display = "inline-flex";
+    } else {
+      if (activeBadge) activeBadge.style.display = "none";
+      if (clearBtn) clearBtn.style.display = "none";
+    }
+
+    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
+    displayLogs.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    // 5. Tablo Satırlarını Render Et (Kompakt ve Daraltılmış)
+    tbody.innerHTML = "";
+    if (displayLogs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:16px;">Seçilen dönemde ve ders kriterinde soru kaydı bulunamadı.</td></tr>`;
+      return;
+    }
+
+    displayLogs.forEach(l => {
       const correct = Number(l.correct) || 0;
       const total = Number(l.count) || 0;
       const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -1061,8 +1297,8 @@ class App {
       
       const actionHtml = `
         <td style="white-space:nowrap; text-align:center;">
-          <button class="btn btn-secondary btn-sm" style="padding:3px 8px; margin-right:4px;" onclick="app.editQuestionLog('${l.id}','${targetStudentId}')">✏️ Güncelle</button>
-          <button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="app.deleteQuestionLog('${l.id}','${targetStudentId}')">🗑️ Sil</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.editQuestionLog('${l.id}','${targetStudentId}')">✏️ Güncelle</button>
+          <button class="btn btn-danger btn-sm" onclick="app.deleteQuestionLog('${l.id}','${targetStudentId}')">🗑️ Sil</button>
         </td>`;
 
       const studentBadge = student.isAggregate && l.studentName
@@ -1073,10 +1309,10 @@ class App {
       tr.innerHTML = `
         <td><strong>${AnalyticsEngine.formatDateTurkish(l.date)}</strong></td>
         <td><strong>${l.subject}</strong> ${studentBadge}</td>
-        <td>${l.count}</td>
-        <td style="color:var(--secondary); font-weight:600;">${l.correct || 0}</td>
-        <td style="color:var(--danger); font-weight:600;">${l.wrong || 0}</td>
-        <td><span class="badge ${rate >= 75 ? 'badge-success' : 'badge-warning'}">%${rate}</span></td>
+        <td><strong>${l.count}</strong></td>
+        <td style="color:var(--secondary); font-weight:700;">${l.correct || 0}</td>
+        <td style="color:var(--danger); font-weight:700;">${l.wrong || 0}</td>
+        <td><span class="badge ${rate >= 75 ? 'badge-success' : 'badge-warning'}" style="font-size:11px; padding:2px 6px;">%${rate}</span></td>
         <td>${l.duration ? l.duration + ' Dk' : '-'}</td>
         ${actionHtml}
       `;
