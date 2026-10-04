@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4.6">
+  <link rel="stylesheet" href="css/style.css?v=4.7">
 </head>
 <body>
 
@@ -166,22 +166,22 @@
           Öğrenci Karnesi
         </button>
 
-        <!-- Öğretmen İçin Öğrenci Yönetimi Sekmesi -->
-        <button class="nav-item teacher-only" data-tab="students">
+        <!-- Öğretmen ve Yönetici İçin Öğrenci Yönetimi Sekmesi -->
+        <button class="nav-item teacher-and-admin-only" data-tab="students">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Öğrenci Yönetimi
         </button>
 
-        <!-- Yönetici Profili -->
-        <button class="nav-item admin-only" data-tab="profile">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Profilim
-        </button>
-
-        <!-- Yöneticiye Özel Sekme (En Altta) -->
+        <!-- Yöneticiye Özel Sekme: Öğretmen Yönetimi -->
         <button class="nav-item admin-only" data-tab="admin">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           Öğretmen Yönetimi
+        </button>
+
+        <!-- Yönetici Profili (Menüde En Altta) -->
+        <button class="nav-item admin-only" data-tab="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profilim
         </button>
       </nav>
 
@@ -1513,10 +1513,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=4.6"></script>
-  <script src="js/store.js?v=4.6"></script>
-  <script src="js/analytics.js?v=4.6"></script>
-  <script src="js/charts.js?v=4.6"></script>
-  <script src="js/app.js?v=4.6"></script>
+  <script src="js/models.js?v=4.7"></script>
+  <script src="js/store.js?v=4.7"></script>
+  <script src="js/analytics.js?v=4.7"></script>
+  <script src="js/charts.js?v=4.7"></script>
+  <script src="js/app.js?v=4.7"></script>
 </body>
 </html>
