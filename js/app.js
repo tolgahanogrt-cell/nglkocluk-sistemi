@@ -1661,7 +1661,11 @@ class App {
     if (attLbl) attLbl.textContent = filterResult.attendanceLabel;
 
     // 1. Öğrenci Bilgileri
-    document.getElementById("karneReportDate").textContent = new Date().toLocaleDateString("tr-TR");
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yyyy = now.getFullYear();
+    document.getElementById("karneReportDate").textContent = `${dd}.${mm}.${yyyy}`;
     document.getElementById("karneStudentName").textContent = student.name;
     document.getElementById("karneSignStudentName").textContent = student.name;
     document.getElementById("karneStudentField").textContent = `${student.grade} / ${student.field}`;
@@ -1739,7 +1743,11 @@ class App {
   printKarne() {
     const student = window.store.getActiveStudent();
     if (!student) {
-      alert("Önce bir öğrenci seçiniz.");
+      if (typeof this.showToast === "function") {
+        this.showToast("Önce bir öğrenci seçiniz.", "warning");
+      } else {
+        alert("Önce bir öğrenci seçiniz.");
+      }
       return;
     }
 
@@ -1747,68 +1755,58 @@ class App {
     if (!karneElem) return;
 
     const periodSelect = document.getElementById("karnePeriodSelect");
+    const periodValue = periodSelect ? periodSelect.value : "all";
     const periodLabel = periodSelect ? periodSelect.options[periodSelect.selectedIndex]?.text : "Genel Karne";
+    const reportDate = document.getElementById("karneReportDate")?.textContent || AnalyticsEngine.formatDateTurkish(new Date().toISOString().split("T")[0]);
 
-    // Yeni izole pencere açarak yazdır (iframe engellerini tamamen aşar)
-    const printWindow = window.open("", "_blank", "width=950,height=800");
-    if (!printWindow) {
-      // Pop-up engellendiyse doğrudan window.print() çağır
-      window.print();
-      return;
+    // Yazdırma yükünü hazırla
+    const payload = {
+      title: `Öğrenci Karnesi (${periodLabel}) - ${student.name}`,
+      studentName: student.name,
+      periodValue: periodValue,
+      periodLabel: periodLabel,
+      date: reportDate,
+      html: karneElem.outerHTML
+    };
+
+    // 1. localStorage'a kaydet (aynı origin sekmeleri için)
+    try {
+      localStorage.setItem("ngk_karne_print_payload", JSON.stringify(payload));
+    } catch (e) {
+      console.warn("localStorage payload kaydı yapılamadı:", e);
     }
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="tr">
-      <head>
-        <meta charset="UTF-8">
-        <base href="${window.location.href}">
-        <title>Öğrenci Karnesi (${periodLabel}) - ${student.name}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <style>
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif; background: white; color: #0f172a; padding: 30px; }
-          .karne-document { width: 100%; max-width: 900px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 30px; }
-          .karne-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 14px; margin-bottom: 20px; }
-          .karne-logo-area { display: flex; align-items: center; gap: 12px; }
-          .karne-logo-box { width: 44px; height: 44px; border-radius: 8px; background: #1d4ed8; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 800; }
-          .karne-logo-img { height: 48px; width: auto; object-fit: contain; }
-          .karne-title-area h2 { font-size: 18px; font-weight: 800; color: #1e3a8a; }
-          .karne-title-area p { font-size: 12px; color: #64748b; }
-          .karne-meta-box { text-align: right; font-size: 12px; color: #475569; }
-          .karne-section { margin-bottom: 18px; }
-          .karne-section-title { font-size: 13px; font-weight: 700; color: #1e3a8a; text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid #1d4ed8; padding-left: 8px; }
-          .karne-profile-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 12px; }
-          .karne-profile-item span { display: block; font-size: 11px; color: #64748b; }
-          .karne-profile-item strong { font-size: 13px; color: #0f172a; }
-          .karne-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
-          .karne-table th, .karne-table td { border: 1px solid #cbd5e1; padding: 8px; text-align: center; }
-          .karne-table th { background: #f1f5f9; font-weight: 700; }
-          .karne-coach-notes-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; font-size: 12px; color: #1e3a8a; line-height: 1.6; }
-          .karne-signature-area { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 18px; border-top: 1px dashed #cbd5e1; }
-          .karne-sign-box { text-align: center; font-size: 12px; width: 180px; }
-          .karne-sign-line { margin-top: 36px; border-top: 1px solid #94a3b8; padding-top: 4px; font-weight: 600; }
-          @media print {
-            body { padding: 0; }
-            .karne-document { border: none; padding: 0; }
-          }
-        </style>
-      </head>
-      <body>
-        ${karneElem.outerHTML}
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 300);
-          };
-        <\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+    // 2. Base64 hash hazırla (Google Sites iframe sandbox ve storage partitioning izolasyonunu %100 aşar)
+    let b64 = "";
+    try {
+      b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    } catch (err) {
+      console.warn("Base64 encode hatası:", err);
+    }
+
+    const printUrl = b64 ? `karne.html#k=${b64}` : `karne.html?period=${encodeURIComponent(periodValue)}`;
+
+    // 3. Güvenli şekilde yeni sekmede aç (link click kullanıcı jestini korur, Google Sites sandbox popup kuralına tam uyar)
+    try {
+      const link = document.createElement("a");
+      link.href = printUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        try { document.body.removeChild(link); } catch (e) {}
+      }, 150);
+    } catch (linkErr) {
+      console.warn("Link tıklama açılamadı, window.open deneniyor:", linkErr);
+      try {
+        const win = window.open(printUrl, "_blank");
+        if (win) win.focus();
+      } catch (winErr) {
+        // Son çare: Doğrudan sayfa içi yazdır
+        window.print();
+      }
+    }
   }
 
   // --- Modal Yönetimi ---
