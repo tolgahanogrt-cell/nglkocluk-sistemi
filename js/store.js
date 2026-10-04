@@ -460,6 +460,7 @@ class AppStore {
       id: "std-" + Date.now(),
       teacherId: teacherId,
       name: studentData.name,
+      studentNumber: (studentData.studentNumber || "").toString().trim(),
       username: (studentData.username || studentData.name.split(" ")[0].toLowerCase()).trim(),
       password: (studentData.password || "123").trim(),
       field: studentData.field || "Sayısal",
@@ -515,6 +516,7 @@ class AppStore {
     }
 
     if (updatedFields.name) student.name = updatedFields.name.trim();
+    if (updatedFields.studentNumber !== undefined) student.studentNumber = String(updatedFields.studentNumber).trim();
     if (updatedFields.field) student.field = updatedFields.field;
     if (updatedFields.grade) student.grade = updatedFields.grade;
     if (updatedFields.section) student.section = updatedFields.section.toUpperCase();
