@@ -165,36 +165,59 @@ class App {
       });
     });
 
-    // 5. Öğrenci Seçiciler ve Filtreleme Dinleyicileri
-    document.getElementById("studentSelect")?.addEventListener("change", (e) => {
-      window.store.setActiveStudent(e.target.value);
-      this.refreshAll();
-      const active = window.store.getActiveStudent();
-      if (active) this.showToast("Öğrenci profili değiştirildi: " + active.name, "info");
-    });
+    // 5. Öğrenci Seçiciler ve İki Yönlü Filtreleme Senkronizasyonu
+    const syncFiltersAndPopulate = (source) => {
+      let grade = "";
+      let section = "";
 
-    document.getElementById("dashStudentSelect")?.addEventListener("change", (e) => {
-      if (e.target.value) {
-        window.store.setActiveStudent(e.target.value);
-        this.refreshAll();
-        const active = window.store.getActiveStudent();
-        if (active) this.showToast("Öğrenci profili seçildi: " + active.name, "info");
+      if (source === "sidebar") {
+        grade = document.getElementById("sidebarGradeSelect")?.value || "";
+        section = document.getElementById("sidebarSectionSelect")?.value || "";
+        const dashGrade = document.getElementById("filterGrade");
+        const dashSection = document.getElementById("filterSection");
+        if (dashGrade) dashGrade.value = grade;
+        if (dashSection) dashSection.value = section;
+      } else {
+        grade = document.getElementById("filterGrade")?.value || "";
+        section = document.getElementById("filterSection")?.value || "";
+        const sideGrade = document.getElementById("sidebarGradeSelect");
+        const sideSection = document.getElementById("sidebarSectionSelect");
+        if (sideGrade) sideGrade.value = grade;
+        if (sideSection) sideSection.value = section;
       }
-    });
 
-    document.getElementById("filterGrade")?.addEventListener("change", () => {
+      window.store.setFilter(grade, section);
       this.renderStudentSelector();
       this.refreshAll();
-    });
+    };
 
-    document.getElementById("filterSection")?.addEventListener("change", () => {
-      this.renderStudentSelector();
-      this.refreshAll();
-    });
-
+    document.getElementById("sidebarGradeSelect")?.addEventListener("change", () => syncFiltersAndPopulate("sidebar"));
+    document.getElementById("sidebarSectionSelect")?.addEventListener("change", () => syncFiltersAndPopulate("sidebar"));
+    document.getElementById("filterGrade")?.addEventListener("change", () => syncFiltersAndPopulate("dashboard"));
+    document.getElementById("filterSection")?.addEventListener("change", () => syncFiltersAndPopulate("dashboard"));
     document.getElementById("filterStudentName")?.addEventListener("input", () => {
       this.renderStudentSelector();
       this.refreshAll();
+    });
+
+    document.getElementById("studentSelect")?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      const dashSelect = document.getElementById("dashStudentSelect");
+      if (dashSelect) dashSelect.value = val;
+      window.store.setActiveStudent(val);
+      this.refreshAll();
+      const active = window.store.getActiveStudent();
+      if (active) this.showToast(val === "ALL" ? "Toplu sınıf/şube görünümü seçildi." : "Öğrenci profili seçildi: " + active.name, "info");
+    });
+
+    document.getElementById("dashStudentSelect")?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      const sideSelect = document.getElementById("studentSelect");
+      if (sideSelect) sideSelect.value = val;
+      window.store.setActiveStudent(val);
+      this.refreshAll();
+      const active = window.store.getActiveStudent();
+      if (active) this.showToast(val === "ALL" ? "Toplu sınıf/şube görünümü seçildi." : "Öğrenci profili seçildi: " + active.name, "info");
     });
 
     // 5b. Grafik Ders Filtre Dinleyicileri
@@ -206,7 +229,12 @@ class App {
       ChartManager.filterAytDatasets(e.target.value);
     });
 
-    // 5c. Grafik Dönem (Genel / Aylık) Filtre Dinleyicileri
+    // 5c. Grafik Dönem (Genel / Ay bazlı) Filtre Dinleyicileri
+    [
+      "filterDashboardPeriod", "tytPeriodSelect", "aytPeriodSelect", "questionsPeriodSelect",
+      "radarPeriodSelect", "aytRadarPeriodSelect", "attendancePeriodSelect"
+    ].forEach(id => ChartManager.populatePeriodSelect(document.getElementById(id)));
+
     document.getElementById("filterDashboardPeriod")?.addEventListener("change", (e) => {
       const val = e.target.value;
       const selects = [
@@ -407,42 +435,42 @@ class App {
     if (role === "student") return;
 
     const allStudents = window.store.getStudents();
-    
-    // Filtre Değerleri
-    const gradeFilter = document.getElementById("filterGrade")?.value || "";
-    const sectionFilter = document.getElementById("filterSection")?.value || "";
+
+    // Filtre Değerleri (Store veya Input)
+    const gradeFilter = window.store.filterGrade || document.getElementById("sidebarGradeSelect")?.value || document.getElementById("filterGrade")?.value || "";
+    const sectionFilter = window.store.filterSection || document.getElementById("sidebarSectionSelect")?.value || document.getElementById("filterSection")?.value || "";
     const nameSearch = (document.getElementById("filterStudentName")?.value || "").toLowerCase().trim();
 
-    // Filtreleme mantığı
-    const filtered = allStudents.filter(s => {
-      // Sınıf Filtresi
-      if (gradeFilter) {
-        const sGrade = (s.grade || "").toLowerCase();
-        if (gradeFilter === "Mezun") {
-          if (!sGrade.includes("mezun")) return false;
-        } else {
-          if (!sGrade.includes(gradeFilter)) return false;
-        }
-      }
-      // Şube Filtresi
-      if (sectionFilter) {
-        const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
-        if (sSec && sSec.toUpperCase() !== sectionFilter.toUpperCase()) return false;
-      }
-      // İsim Filtresi
-      if (nameSearch) {
-        if (!s.name.toLowerCase().includes(nameSearch)) return false;
-      }
-      return true;
-    });
+    // Sınıf ve Şube dropdownlarını senkronize et
+    const sideGrade = document.getElementById("sidebarGradeSelect");
+    const dashGrade = document.getElementById("filterGrade");
+    if (sideGrade && sideGrade.value !== gradeFilter) sideGrade.value = gradeFilter;
+    if (dashGrade && dashGrade.value !== gradeFilter) dashGrade.value = gradeFilter;
 
-    const activeId = window.store.activeStudentId;
+    const sideSection = document.getElementById("sidebarSectionSelect");
+    const dashSection = document.getElementById("filterSection");
+    if (sideSection && sideSection.value !== sectionFilter) sideSection.value = sectionFilter;
+    if (dashSection && dashSection.value !== sectionFilter) dashSection.value = sectionFilter;
+
+    // Filtrelenmiş öğrenci listesi
+    const filtered = window.store.getFilteredStudents(gradeFilter, sectionFilter, nameSearch);
+    const activeId = window.store.activeStudentId || "ALL";
+
+    let gradeLabel = gradeFilter ? (gradeFilter === "Mezun" ? "Mezun" : `${gradeFilter}. Sınıf`) : "Tüm Sınıflar";
+    let sectionLabel = sectionFilter ? `${sectionFilter} Şubesi` : "Tüm Şubeler";
+    const allOptionText = `👥 Tüm Öğrenciler (${gradeLabel} - ${sectionLabel} Toplu)`;
 
     // 1. Sidebar Seçiciyi Doldur
     const sidebarSelect = document.getElementById("studentSelect");
     if (sidebarSelect) {
       sidebarSelect.innerHTML = "";
-      allStudents.forEach(s => {
+      const optAll = document.createElement("option");
+      optAll.value = "ALL";
+      optAll.textContent = allOptionText;
+      if (activeId === "ALL") optAll.selected = true;
+      sidebarSelect.appendChild(optAll);
+
+      filtered.forEach(s => {
         const opt = document.createElement("option");
         opt.value = s.id;
         const sSec = s.section ? ` - ${s.section} Şubesi` : "";
@@ -457,31 +485,30 @@ class App {
     const countBadge = document.getElementById("filterStudentCountBadge");
     if (dashSelect) {
       dashSelect.innerHTML = "";
-      if (filtered.length === 0) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "Kriterlere uygun öğrenci bulunamadı";
-        dashSelect.appendChild(opt);
-      } else {
-        filtered.forEach(s => {
-          const opt = document.createElement("option");
-          opt.value = s.id;
-          const sSec = s.section ? ` - ${s.section} Şubesi` : "";
-          opt.textContent = `${s.name} (${s.grade || ''}${sSec} | ${s.field})`;
-          if (s.id === activeId) opt.selected = true;
-          dashSelect.appendChild(opt);
-        });
+      const optAll = document.createElement("option");
+      optAll.value = "ALL";
+      optAll.textContent = allOptionText;
+      if (activeId === "ALL") optAll.selected = true;
+      dashSelect.appendChild(optAll);
 
-        // Eğer seçili öğrenci filtre sonucunda yoksa, ilk öğrenciyi seç
-        const isCurrentInFiltered = filtered.some(s => s.id === activeId);
-        if (!isCurrentInFiltered && filtered.length > 0) {
-          window.store.setActiveStudent(filtered[0].id);
-        }
-      }
+      filtered.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        const sSec = s.section ? ` - ${s.section} Şubesi` : "";
+        opt.textContent = `${s.name} (${s.grade || ''}${sSec} | ${s.field})`;
+        if (s.id === activeId) opt.selected = true;
+        dashSelect.appendChild(opt);
+      });
     }
 
     if (countBadge) {
-      countBadge.textContent = `${filtered.length} / ${allStudents.length} Öğrenci`;
+      if (activeId === "ALL") {
+        countBadge.textContent = `${filtered.length} Öğrenci (Toplu Görünüm)`;
+        countBadge.className = "badge badge-success";
+      } else {
+        countBadge.textContent = `1 / ${filtered.length} Öğrenci`;
+        countBadge.className = "badge badge-primary";
+      }
     }
   }
 
@@ -490,7 +517,7 @@ class App {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    const teachers = window.store.getTeachers();
+    const teachers = window.store.getTeachers().slice().sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     if (teachers.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Kayıtlı öğretmen bulunmuyor.</td></tr>`;
       return;
@@ -506,17 +533,17 @@ class App {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><strong>${t.name}</strong></td>
-        <td>${t.branch}</td>
+        <td><span class="badge badge-primary">${t.branch}</span></td>
         <td>
           <code>${t.username}</code>
           ${prevCreds}
         </td>
         <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${t.password}</code></td>
         <td>${t.email || "-"}</td>
-        <td>${t.createdAt || "-"}</td>
+        <td>${AnalyticsEngine.formatDateTurkish(t.createdAt)}</td>
         <td>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditTeacherCredentials('${t.id}')">🔑 Şifre Değiştir</button>
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditTeacherCredentials('${t.id}')">✏️ Bilgileri Düzenle</button>
             <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteTeacher('${t.id}')">Sil</button>
           </div>
         </td>
@@ -540,7 +567,9 @@ class App {
     if (!teacher) return;
 
     document.getElementById("editTeacherId").value = teacher.id;
-    document.getElementById("editTeacherName").value = `${teacher.name} (${teacher.branch})`;
+    document.getElementById("editTeacherName").value = teacher.name;
+    const branchEl = document.getElementById("editTeacherBranch");
+    if (branchEl) branchEl.value = teacher.branch;
     document.getElementById("editTeacherUsername").value = teacher.username;
     document.getElementById("editTeacherPassword").value = teacher.password;
 
@@ -566,19 +595,27 @@ class App {
 
   handleSaveTeacherCredentials() {
     const id = document.getElementById("editTeacherId").value;
+    const name = document.getElementById("editTeacherName").value.trim();
+    const branch = document.getElementById("editTeacherBranch")?.value || "Rehberlik ve Psikolojik Danışmanlık";
     const newUsername = document.getElementById("editTeacherUsername").value.trim();
     const newPassword = document.getElementById("editTeacherPassword").value.trim();
 
-    if (!newUsername || !newPassword) {
-      alert("Lütfen hem kullanıcı adını hem de şifreyi doldurunuz.");
+    if (!name || !newUsername || !newPassword) {
+      alert("Lütfen ad soyad, kullanıcı adı ve şifre alanlarını eksiksiz doldurunuz.");
       return;
     }
 
-    const res = window.store.updateTeacherCredentials(id, newUsername, newPassword);
+    const res = window.store.updateTeacher(id, {
+      name,
+      branch,
+      username: newUsername,
+      password: newPassword
+    });
+
     if (res.success) {
       this.closeModal("modalEditTeacherCredentials");
       this.renderTeachersTable();
-      this.showToast("Öğretmen kullanıcı adı ve şifresi başarıyla güncellendi!", "success");
+      this.showToast("Öğretmen bilgileri başarıyla güncellendi!", "success");
     } else {
       alert(res.message || "Güncelleme başarısız.");
     }
@@ -629,7 +666,8 @@ class App {
         <td><span style="font-size:12px; font-weight:600; color:var(--primary);">TYT: ${s.targetTytNet || '-'} | AYT: ${s.targetAytNet || '-'}</span></td>
         <td>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudentCredentials('${s.id}')">🔑 Şifre Değiştir</button>
+            <button class="btn btn-primary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudent('${s.id}')">✏️ Düzenle</button>
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudentCredentials('${s.id}')">🔑 Şifre</button>
             <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.selectStudentFromTable('${s.id}')">Profili Aç</button>
             <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteStudent('${s.id}')">Sil</button>
           </div>
@@ -639,12 +677,41 @@ class App {
     });
   }
 
+  openEditStudent(studentId) {
+    const student = (window.store.data.students || []).find(s => s.id === studentId);
+    if (!student) return;
+
+    document.getElementById("editStudentIdTarget").value = student.id;
+    document.getElementById("modalStudentTitle").textContent = `Öğrenci Bilgilerini Güncelle: ${student.name}`;
+    document.getElementById("btnSaveStudent").textContent = "Değişiklikleri Kaydet";
+
+    document.getElementById("stdName").value = student.name;
+    document.getElementById("stdUsername").value = student.username;
+    document.getElementById("stdPassword").value = student.password;
+    document.getElementById("stdField").value = student.field;
+    document.getElementById("stdGrade").value = student.grade;
+    document.getElementById("stdSection").value = student.section || "A";
+    document.getElementById("stdTargetUni").value = student.targetUniversity || "";
+    document.getElementById("stdTargetDept").value = student.targetDepartment || "";
+    document.getElementById("stdTargetTyt").value = student.targetTytNet || "";
+    document.getElementById("stdTargetAyt").value = student.targetAytNet || "";
+    document.getElementById("stdTargetWeeklyQuestions").value = student.targetWeeklyQuestions || 1200;
+
+    this.openModal("modalStudent");
+  }
+
   openEditStudentCredentials(studentId) {
     const student = (window.store.data.students || []).find(s => s.id === studentId);
     if (!student) return;
 
     document.getElementById("editStudentId").value = student.id;
-    document.getElementById("editStudentName").value = `${student.name} (${student.field} - ${student.grade})`;
+    document.getElementById("editStudentName").value = student.name;
+    const gradeEl = document.getElementById("editStudentGrade");
+    if (gradeEl) gradeEl.value = student.grade || "12. Sınıf";
+    const secEl = document.getElementById("editStudentSection");
+    if (secEl) secEl.value = student.section || "A";
+    const fieldEl = document.getElementById("editStudentField");
+    if (fieldEl) fieldEl.value = student.field || "Sayısal";
     document.getElementById("editStudentUsername").value = student.username;
     document.getElementById("editStudentPassword").value = student.password;
 
@@ -670,19 +737,32 @@ class App {
 
   handleSaveStudentCredentials() {
     const id = document.getElementById("editStudentId").value;
+    const name = document.getElementById("editStudentName").value.trim();
+    const grade = document.getElementById("editStudentGrade")?.value || "";
+    const section = document.getElementById("editStudentSection")?.value || "";
+    const field = document.getElementById("editStudentField")?.value || "";
     const newUsername = document.getElementById("editStudentUsername").value.trim();
     const newPassword = document.getElementById("editStudentPassword").value.trim();
 
-    if (!newUsername || !newPassword) {
-      alert("Lütfen hem kullanıcı adını hem de şifreyi doldurunuz.");
+    if (!name || !newUsername || !newPassword) {
+      alert("Lütfen ad soyad, kullanıcı adı ve şifre alanlarını eksiksiz doldurunuz.");
       return;
     }
 
-    const res = window.store.updateStudentCredentials(id, newUsername, newPassword);
+    const res = window.store.updateStudent(id, {
+      name,
+      grade,
+      section,
+      field,
+      username: newUsername,
+      password: newPassword
+    });
+
     if (res.success) {
       this.closeModal("modalEditStudentCredentials");
       this.renderStudentsTable();
-      this.showToast("Öğrenci kullanıcı adı ve şifresi başarıyla güncellendi!", "success");
+      this.refreshAll();
+      this.showToast("Öğrenci bilgileri başarıyla güncellendi!", "success");
     } else {
       alert(res.message || "Güncelleme başarısız.");
     }
@@ -707,6 +787,25 @@ class App {
   }
 
   renderHeroCard(student) {
+    if (!student) return;
+
+    if (student.isAggregate) {
+      document.getElementById("heroName").textContent = student.name;
+      document.getElementById("heroField").textContent = "Tüm Alanlar";
+      document.getElementById("heroGrade").textContent = `${student.studentCount} Kayıtlı Öğrenci`;
+      document.getElementById("heroTarget").textContent = "Sınıf / Şube Başarı Hedefleri";
+      document.getElementById("heroTargetNets").textContent = `Hedef Ortalaması: TYT ${student.targetTytNet} Net | AYT ${student.targetAytNet} Net`;
+
+      const tytCount = (student.exams || []).filter(e => e.type === "TYT").length;
+      const aytCount = (student.exams || []).filter(e => e.type === "AYT").length;
+      document.getElementById("heroExamCount").textContent = `${tytCount} TYT / ${aytCount} AYT Sınav Sonucu`;
+
+      const avatar = document.getElementById("heroAvatar");
+      avatar.style.background = "#0f172a";
+      avatar.textContent = "👥";
+      return;
+    }
+
     document.getElementById("heroName").textContent = student.name;
     document.getElementById("heroField").textContent = student.field;
     const secStr = student.section ? ` (${student.section} Şubesi)` : "";
@@ -746,7 +845,8 @@ class App {
       const diff = stats.tytTargetDiff;
       const sign = diff >= 0 ? "+" : "";
       const colorClass = diff >= 0 ? "trend-up" : "trend-down";
-      tytTrendEl.innerHTML = `<span class="${colorClass}">${sign}${diff} Net</span> <span style="color:var(--text-muted);">(Hedefe göre)</span>`;
+      const lbl = stats.isAggregate ? "(Sınıf Ortalaması)" : "(Hedefe göre)";
+      tytTrendEl.innerHTML = `<span class="${colorClass}">${sign}${diff} Net</span> <span style="color:var(--text-muted);">${lbl}</span>`;
     } else {
       tytTrendEl.innerHTML = `<span style="color:var(--text-muted);">-</span>`;
     }
@@ -757,7 +857,8 @@ class App {
       const diff = stats.aytTargetDiff;
       const sign = diff >= 0 ? "+" : "";
       const colorClass = diff >= 0 ? "trend-up" : "trend-down";
-      aytTrendEl.innerHTML = `<span class="${colorClass}">${sign}${diff} Net</span> <span style="color:var(--text-muted);">(Hedefe göre)</span>`;
+      const lbl = stats.isAggregate ? "(Sınıf Ortalaması)" : "(Hedefe göre)";
+      aytTrendEl.innerHTML = `<span class="${colorClass}">${sign}${diff} Net</span> <span style="color:var(--text-muted);">${lbl}</span>`;
     } else {
       aytTrendEl.innerHTML = `<span style="color:var(--text-muted);">-</span>`;
     }
@@ -767,7 +868,7 @@ class App {
     if (fill) fill.style.width = `${stats.weeklyProgressPct}%`;
     document.getElementById("kpiWeeklyPct").textContent = `%${stats.weeklyProgressPct} Tamamlandı (${stats.totalQuestions} Toplam)`;
 
-    document.getElementById("kpiAttendanceRate").textContent = `${stats.totalAbsentDays} Gün`;
+    document.getElementById("kpiAttendanceRate").textContent = `${stats.totalAbsentDays} Kayıt`;
     document.getElementById("kpiAttendanceDetails").textContent = `Toplam ${stats.totalAbsentHours} Ders Saati`;
   }
 
@@ -789,7 +890,8 @@ class App {
     tbody.innerHTML = "";
 
     const isCoach = window.store.getRole() !== "student";
-    const exams = student.exams || [];
+    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
+    const exams = (student.exams || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (exams.length === 0) {
       tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">Kayıtlı deneme sınavı bulunmuyor.</td></tr>`;
       return;
@@ -815,11 +917,15 @@ class App {
         ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteExam('${ex.id}')">Sil</button></td>`
         : "";
 
+      const studentBadge = student.isAggregate && ex.studentName
+        ? `<span class="badge badge-outline" style="font-size:11px; margin-right:6px; color:var(--primary); font-weight:700;">${ex.studentName}</span>`
+        : "";
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${ex.date}</td>
+        <td><strong>${AnalyticsEngine.formatDateTurkish(ex.date)}</strong></td>
         <td><span class="badge ${ex.type === 'TYT' ? 'badge-primary' : 'badge-success'}">${ex.type}</span></td>
-        <td><strong>${ex.name}</strong></td>
+        <td>${studentBadge}<strong>${ex.name}</strong></td>
         <td>${"⭐".repeat(ex.difficulty || 3)}</td>
         <td style="font-size:12px; color:var(--text-muted);">${subjectSummary}</td>
         <td><strong style="color:var(--primary); font-size:14px;">${ex.totalNet} Net</strong></td>
@@ -843,7 +949,8 @@ class App {
     document.getElementById("qAccuracyRate").textContent = `%${stats.accuracyRate} Doğruluk Oranı`;
     document.getElementById("qTargetProgressFill").style.width = `${stats.weeklyProgressPct}%`;
 
-    const logs = student.questionLogs || [];
+    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
+    const logs = (student.questionLogs || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (logs.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Henüz soru çözümü kaydı girilmedi.</td></tr>`;
       return;
@@ -857,10 +964,14 @@ class App {
         ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteQuestionLog('${l.id}')">Sil</button></td>`
         : "";
 
+      const studentBadge = student.isAggregate && l.studentName
+        ? `<span class="badge badge-outline" style="font-size:10px; margin-left:4px;">${l.studentName}</span>`
+        : "";
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${l.date}</td>
-        <td><strong>${l.subject}</strong></td>
+        <td><strong>${AnalyticsEngine.formatDateTurkish(l.date)}</strong></td>
+        <td><strong>${l.subject}</strong> ${studentBadge}</td>
         <td>${l.count}</td>
         <td style="color:var(--secondary); font-weight:600;">${l.correct || 0}</td>
         <td style="color:var(--danger); font-weight:600;">${l.wrong || 0}</td>
@@ -879,7 +990,8 @@ class App {
     tbody.innerHTML = "";
 
     const isCoach = window.store.getRole() !== "student";
-    const list = student.courseAttendance || [];
+    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
+    const list = (student.courseAttendance || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (list.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Kayıtlı ders devamsızlığı bulunmuyor.</td></tr>`;
       return;
@@ -894,9 +1006,13 @@ class App {
         ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteCourseAttendance('${a.id}')">Sil</button></td>`
         : "";
 
+      const studentBadge = student.isAggregate && a.studentName
+        ? `<span class="badge badge-outline" style="font-size:10px; margin-left:4px;">${a.studentName}</span>`
+        : "";
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong>${a.date}</strong></td>
+        <td><strong>${AnalyticsEngine.formatDateTurkish(a.date)}</strong> ${studentBadge}</td>
         <td><span class="badge ${bClass}">${a.type}</span></td>
         <td>${a.hours} Saat</td>
         <td style="color:var(--text-muted);">${a.reason || "-"}</td>
@@ -913,7 +1029,8 @@ class App {
     container.innerHTML = "";
 
     const isCoach = window.store.getRole() !== "student";
-    const sessions = student.coachingSessions || [];
+    // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
+    const sessions = (student.coachingSessions || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (sessions.length === 0) {
       container.innerHTML = `<p style="color:var(--text-muted); font-size:13px;">Henüz koçluk seansı kaydedilmedi.</p>`;
       return;
@@ -924,12 +1041,15 @@ class App {
       card.style.cssText = "background:var(--bg-main); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; margin-bottom:12px;";
 
       const assignmentsHtml = (s.assignments || []).map(a => `<li style="margin-left:18px; margin-top:3px;">${a}</li>`).join("");
+      const studentBadge = student.isAggregate && s.studentName
+        ? `<span class="badge badge-outline" style="font-size:11px; margin-left:6px;">${s.studentName}</span>`
+        : "";
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <div>
-            <strong style="font-size:14px;">${s.title}</strong>
-            <span style="font-size:12px; color:var(--text-muted); margin-left:8px;">(${s.date})</span>
+            <strong style="font-size:14px;">${s.title}</strong> ${studentBadge}
+            <span style="font-size:12px; color:var(--text-muted); margin-left:8px;">(${AnalyticsEngine.formatDateTurkish(s.date)})</span>
           </div>
           <div>
             <span class="badge ${s.status === 'Katıldı' ? 'badge-success' : 'badge-danger'}">${s.status}</span>
