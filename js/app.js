@@ -3,6 +3,7 @@
 class App {
   constructor() {
     this.currentTab = "dashboard";
+    this.examFilterPeriod = "all";
     this.questionFilterPeriod = "weekly";
     this.questionFilterSubject = null;
     this.bindEvents();
@@ -332,6 +333,11 @@ class App {
     // 11. PDF / Yazdır ve Karne Dönem Filtresi
     document.getElementById("btnPrintKarneAction")?.addEventListener("click", () => this.printKarne());
     document.getElementById("karnePeriodSelect")?.addEventListener("change", () => this.renderKarne());
+    document.getElementById("examFilterPeriod")?.addEventListener("change", (e) => {
+      this.examFilterPeriod = e.target.value;
+      const student = window.store.getActiveStudent();
+      this.renderExamsTable(student);
+    });
 
     // 12. Soru Takip Çizelgesi Dönem ve Branş Filtresi
     document.querySelectorAll("#questionPeriodBtnGroup .btn-period").forEach(btn => {
@@ -945,12 +951,60 @@ class App {
     if (!tbody) return;
     tbody.innerHTML = "";
 
+    if (!student) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">Deneme sınavlarını görüntülemek için lütfen Sınıf ve Şube seçiniz.</td></tr>`;
+      return;
+    }
+
     const role = window.store.getRole();
     const canManage = role === "admin" || role === "teacher";
+
+    // Filtreleme Seçimi
+    const filterSelect = document.getElementById("examFilterPeriod");
+    const period = this.examFilterPeriod || (filterSelect ? filterSelect.value : "all");
+    if (filterSelect && filterSelect.value !== period) {
+      filterSelect.value = period;
+    }
+
     // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
-    const exams = (student.exams || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-    if (exams.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">Kayıtlı deneme sınavı bulunmuyor.</td></tr>`;
+    const allExams = (student.exams || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    let filteredExams = allExams;
+    let periodLabel = "Tüm Dönem";
+
+    if (period.startsWith("m")) {
+      const monthNum = parseInt(period.replace("m", ""), 10);
+      const monthNames = [
+        "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+        "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+      ];
+      periodLabel = `${monthNames[monthNum] || monthNum} Ayı`;
+
+      filteredExams = allExams.filter(ex => {
+        if (!ex.date) return false;
+        const clean = String(ex.date).split("T")[0].trim();
+        const parts = clean.split("-");
+        if (parts.length === 3 && parts[0].length === 4) {
+          return parseInt(parts[1], 10) === monthNum;
+        }
+        const dotParts = clean.split(".");
+        if (dotParts.length === 3) {
+          return parseInt(dotParts[1], 10) === monthNum;
+        }
+        const slashParts = clean.split("/");
+        if (slashParts.length === 3) {
+          return parseInt(slashParts[1], 10) === monthNum;
+        }
+        const d = new Date(ex.date);
+        return !isNaN(d.getTime()) && (d.getMonth() + 1) === monthNum;
+      });
+    }
+
+    if (filteredExams.length === 0) {
+      const msg = period === "all" 
+        ? "Kayıtlı deneme sınavı bulunmuyor." 
+        : `Seçilen dönemde (${periodLabel}) kayıtlı deneme sınavı bulunamadı.`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:24px;">${msg}</td></tr>`;
       return;
     }
 
