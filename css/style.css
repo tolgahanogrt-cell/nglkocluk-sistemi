@@ -923,6 +923,12 @@ body.role-teacher .admin-only {
   display: none !important;
 }
 
+/* Yönetici olmayan hiç kimse yönetici ekranını göremez */
+body:not(.role-admin) #page-admin,
+body:not(.role-admin) .admin-only {
+  display: none !important;
+}
+
 /* 1. SİSTEM YÖNETİCİSİ */
 body.role-admin .admin-only {
   display: block !important;
