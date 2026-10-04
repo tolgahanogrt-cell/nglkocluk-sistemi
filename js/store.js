@@ -13,10 +13,11 @@ class AppStore {
       this.filterGrade = curStudent && curStudent.grade ? curStudent.grade.replace(/[^\d]/g, "") : "";
       this.filterSection = curStudent ? curStudent.section : "";
     } else {
-      // Sayfa ilk açıldığında Sınıf ve Şube seçilmemiş olarak gelsin (0 durumu)
-      this.activeStudentId = null;
-      this.filterGrade = "";
-      this.filterSection = "";
+      // Sayfa yenilendiğinde (F5) seçilen sınıf, şube ve öğrenci korunsun
+      // Sadece ilk giriş yapıldığında (sessionStorage boşken) boş olarak başlar (0 durumu)
+      this.filterGrade = sessionStorage.getItem("kocluk_filter_grade") || "";
+      this.filterSection = sessionStorage.getItem("kocluk_filter_section") || "";
+      this.activeStudentId = sessionStorage.getItem("kocluk_active_student_id") || null;
     }
   }
 
@@ -45,6 +46,9 @@ class AppStore {
       this.filterSection = "";
       sessionStorage.setItem("kocluk_auth_role", "admin");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+      sessionStorage.removeItem("kocluk_filter_grade");
+      sessionStorage.removeItem("kocluk_filter_section");
+      sessionStorage.removeItem("kocluk_active_student_id");
       return { success: true, user: this.currentUser };
     }
     return { success: false, message: "Yönetici kullanıcı adı veya şifresi hatalı!" };
@@ -81,6 +85,9 @@ class AppStore {
       this.filterSection = "";
       sessionStorage.setItem("kocluk_auth_role", "teacher");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+      sessionStorage.removeItem("kocluk_filter_grade");
+      sessionStorage.removeItem("kocluk_filter_section");
+      sessionStorage.removeItem("kocluk_active_student_id");
       return { success: true, user: this.currentUser };
     }
     return { success: false, message: "Öğretmen kullanıcı adı veya şifresi hatalı!" };
@@ -112,6 +119,9 @@ class AppStore {
     this.filterSection = "";
     sessionStorage.removeItem("kocluk_auth_role");
     sessionStorage.removeItem("kocluk_auth_user");
+    sessionStorage.removeItem("kocluk_filter_grade");
+    sessionStorage.removeItem("kocluk_filter_section");
+    sessionStorage.removeItem("kocluk_active_student_id");
   }
 
   loadFromStorage() {
@@ -244,6 +254,16 @@ class AppStore {
   setFilter(grade, section) {
     this.filterGrade = grade || "";
     this.filterSection = section || "";
+    if (this.filterGrade) {
+      sessionStorage.setItem("kocluk_filter_grade", this.filterGrade);
+    } else {
+      sessionStorage.removeItem("kocluk_filter_grade");
+    }
+    if (this.filterSection) {
+      sessionStorage.setItem("kocluk_filter_section", this.filterSection);
+    } else {
+      sessionStorage.removeItem("kocluk_filter_section");
+    }
   }
 
   getFilteredStudents(gradeFilter = this.filterGrade, sectionFilter = this.filterSection) {
@@ -387,6 +407,7 @@ class AppStore {
     const filtered = this.getFilteredStudents(this.filterGrade, this.filterSection);
     if (filtered.length > 0) {
       this.activeStudentId = filtered[0].id;
+      sessionStorage.setItem("kocluk_active_student_id", this.activeStudentId);
       return filtered[0];
     }
 
@@ -397,6 +418,7 @@ class AppStore {
     if (this.authRole === "student") return null;
     if (id === "ALL") {
       this.activeStudentId = "ALL";
+      sessionStorage.setItem("kocluk_active_student_id", "ALL");
       this.saveToStorage();
       return this.getActiveStudent();
     }
@@ -404,6 +426,7 @@ class AppStore {
     const student = students.find(s => s.id === id);
     if (student) {
       this.activeStudentId = id;
+      sessionStorage.setItem("kocluk_active_student_id", id);
       this.saveToStorage();
       return student;
     }
