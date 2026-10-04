@@ -3,9 +3,10 @@
 const INITIAL_DEMO_DATA = {
   // Sistem Yöneticisi
   admin: {
-    username: "admin",
-    password: "123",
-    name: "Sistem Yöneticisi"
+    username: "aşen",
+    password: "123456",
+    name: "Aynur ŞEN",
+    title: "Müdür Yardımcısı"
   },
 
   // Öğretmenler / Koçlar
