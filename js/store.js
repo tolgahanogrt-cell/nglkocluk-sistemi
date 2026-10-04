@@ -94,6 +94,8 @@ class AppStore {
       this.authRole = "student";
       this.currentUser = { role: "student", id: student.id, name: student.name, username: student.username };
       this.activeStudentId = student.id;
+      this.filterGrade = student.grade ? student.grade.replace(/[^\d]/g, "") : "";
+      this.filterSection = student.section || "A";
       sessionStorage.setItem("kocluk_auth_role", "student");
       sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
       this.saveToStorage();
