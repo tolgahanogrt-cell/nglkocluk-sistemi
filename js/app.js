@@ -599,14 +599,17 @@ class App {
     });
   }
 
-  deleteTeacher(teacherId) {
+  async deleteTeacher(teacherId) {
     const teacher = (window.store.data.teachers || []).find(t => t.id === teacherId);
     const name = teacher ? teacher.name : "Öğretmen";
-    if (confirm(`"${name}" adlı öğretmeni ve erişim yetkisini silmek istediğinize emin misiniz?`)) {
-      window.store.deleteTeacher(teacherId);
-      this.renderTeachersTable();
-      this.showToast(`${name} başarıyla silindi.`, "info");
-    }
+    const confirmed = await this.confirmDelete({
+      title: "Öğretmen Hesabını Sil",
+      message: `"${name}" adlı öğretmeni ve sisteme erişim yetkisini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+    });
+    if (!confirmed) return;
+    window.store.deleteTeacher(teacherId);
+    this.renderTeachersTable();
+    this.showToast(`${name} başarıyla silindi.`, "info");
   }
 
   openEditTeacherCredentials(teacherId) {
@@ -846,15 +849,18 @@ class App {
     this.showToast("Öğrenci profili seçildi ve Genel Bakış açıldı.", "success");
   }
 
-  deleteStudent(studentId) {
+  async deleteStudent(studentId) {
     const student = window.store.getStudents().find(s => s.id === studentId);
     const name = student ? student.name : "Öğrenci";
-    if (confirm(`"${name}" adlı öğrenciyi ve tüm kayıtlarını silmek istediğinize emin misiniz?`)) {
-      window.store.deleteStudent(studentId);
-      this.refreshAll();
-      this.renderStudentsTable();
-      this.showToast(`${name} başarıyla silindi.`, "info");
-    }
+    const confirmed = await this.confirmDelete({
+      title: "Öğrenci Kaydını Sil",
+      message: `"${name}" adlı öğrenciyi ve bu öğrenciye ait tüm kayıtları kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+    });
+    if (!confirmed) return;
+    window.store.deleteStudent(studentId);
+    this.refreshAll();
+    this.renderStudentsTable();
+    this.showToast(`${name} başarıyla silindi.`, "info");
   }
 
   renderHeroCard(student) {
@@ -1884,45 +1890,129 @@ class App {
     this.showToast(editing ? "Koçluk seansı güncellendi!" : "Koçluk seansı kaydedildi!", "success");
   }
 
-  // --- Silme İşlemleri ---
-  deleteTeacher(id) {
-    if (confirm("Bu öğretmeni silmek istediğinize emin misiniz?")) {
-      window.store.deleteTeacher(id);
-      this.renderTeachersTable();
-      this.showToast("Öğretmen hesabı silindi.", "info");
-    }
+  // --- Silme İşlemleri ve Tailwind 2 Onay Modalı ---
+  confirmDelete(titleOrOptions, messageText) {
+    return new Promise((resolve) => {
+      let title = "Silme Onayı";
+      let message = "Bu kaydı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.";
+
+      if (typeof titleOrOptions === "string") {
+        if (messageText) {
+          title = titleOrOptions;
+          message = messageText;
+        } else {
+          message = titleOrOptions;
+        }
+      } else if (typeof titleOrOptions === "object" && titleOrOptions !== null) {
+        if (titleOrOptions.title) title = titleOrOptions.title;
+        if (titleOrOptions.message) message = titleOrOptions.message;
+      }
+
+      const modal = document.getElementById("modalConfirmDelete");
+      const titleEl = document.getElementById("confirmDeleteTitle");
+      const msgEl = document.getElementById("confirmDeleteMessage");
+      const btnApprove = document.getElementById("btnApproveConfirmDelete");
+      const btnCancel = document.getElementById("btnCancelConfirmDelete");
+
+      if (!modal || !btnApprove || !btnCancel) {
+        // Fallback: If modal DOM elements are missing, proceed safely
+        resolve(true);
+        return;
+      }
+
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+
+      modal.classList.remove("hidden");
+
+      let resolved = false;
+      const cleanup = (result) => {
+        if (resolved) return;
+        resolved = true;
+        modal.classList.add("hidden");
+        btnApprove.removeEventListener("click", onApprove);
+        btnCancel.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      };
+
+      const onApprove = (e) => {
+        if (e) e.preventDefault();
+        cleanup(true);
+      };
+      const onCancel = (e) => {
+        if (e) e.preventDefault();
+        cleanup(false);
+      };
+      const onBackdrop = (e) => {
+        if (e.target === modal) cleanup(false);
+      };
+      const onKeydown = (e) => {
+        if (e.key === "Escape") cleanup(false);
+      };
+
+      btnApprove.addEventListener("click", onApprove);
+      btnCancel.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKeydown);
+    });
   }
 
-  deleteExam(examId, sid) {
-    if (confirm("Bu sınav kaydını silmek istediğinize emin misiniz?")) {
-      window.store.deleteExam(sid || window.store.getActiveStudent().id, examId);
-      this.refreshAll();
-      this.showToast("Sınav kaydı silindi.", "info");
-    }
+  async deleteExam(examId, sid) {
+    const targetStudentId = sid || window.store.getActiveStudent().id;
+    const student = (window.store.data.students || []).find(s => s.id === targetStudentId);
+    const exam = student && student.exams ? student.exams.find(e => e.id === examId) : null;
+    const examName = exam ? exam.name : "Bu sınav";
+
+    const confirmed = await this.confirmDelete({
+      title: "Deneme Sınavını Sil",
+      message: `"${examName}" adlı deneme sınavı kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+    });
+    if (!confirmed) return;
+
+    window.store.deleteExam(targetStudentId, examId);
+    this.refreshAll();
+    this.showToast("Sınav kaydı silindi.", "info");
   }
 
-  deleteQuestionLog(logId, sid) {
-    if (confirm("Bu soru kaydını silmek istediğinize emin misiniz?")) {
-      window.store.deleteQuestionLog(sid || window.store.getActiveStudent().id, logId);
-      this.refreshAll();
-      this.showToast("Soru kaydı silindi.", "info");
-    }
+  async deleteQuestionLog(logId, sid) {
+    const targetStudentId = sid || window.store.getActiveStudent().id;
+    const confirmed = await this.confirmDelete({
+      title: "Soru Kaydını Sil",
+      message: "Bu soru takip kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+    });
+    if (!confirmed) return;
+
+    window.store.deleteQuestionLog(targetStudentId, logId);
+    this.refreshAll();
+    this.showToast("Soru kaydı silindi.", "info");
   }
 
-  deleteCourseAttendance(attId, sid) {
-    if (confirm("Bu devamsızlık kaydını silmek istediğinize emin misiniz?")) {
-      window.store.deleteCourseAttendance(sid || window.store.getActiveStudent().id, attId);
-      this.refreshAll();
-      this.showToast("Devamsızlık kaydı silindi.", "info");
-    }
+  async deleteCourseAttendance(attId, sid) {
+    const targetStudentId = sid || window.store.getActiveStudent().id;
+    const confirmed = await this.confirmDelete({
+      title: "Devamsızlık Kaydını Sil",
+      message: "Bu ders devamsızlık kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+    });
+    if (!confirmed) return;
+
+    window.store.deleteCourseAttendance(targetStudentId, attId);
+    this.refreshAll();
+    this.showToast("Devamsızlık kaydı silindi.", "info");
   }
 
-  deleteCoachingSession(sessionId, sid) {
-    if (confirm("Bu koçluk seansını silmek istediğinize emin misiniz?")) {
-      window.store.deleteCoachingSession(sid || window.store.getActiveStudent().id, sessionId);
-      this.refreshAll();
-      this.showToast("Koçluk seansı silindi.", "info");
-    }
+  async deleteCoachingSession(sessionId, sid) {
+    const targetStudentId = sid || window.store.getActiveStudent().id;
+    const confirmed = await this.confirmDelete({
+      title: "Koçluk Seansını Sil",
+      message: "Bu koçluk seansı kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+    });
+    if (!confirmed) return;
+
+    window.store.deleteCoachingSession(targetStudentId, sessionId);
+    this.refreshAll();
+    this.showToast("Koçluk seansı silindi.", "info");
   }
 
   showToast(message, type = "success") {
@@ -1985,3 +2075,12 @@ class App {
 document.addEventListener("DOMContentLoaded", () => {
   window.app = new App();
 });
+
+// Google Sites iframe sandbox uyumluluğu: alert çağrılarını zarif toast bildirimlerine dönüştür
+window.alert = function(msg) {
+  if (window.app && typeof window.app.showToast === "function") {
+    window.app.showToast(msg, "danger");
+  } else {
+    console.warn("Sistem Uyarısı:", msg);
+  }
+};
