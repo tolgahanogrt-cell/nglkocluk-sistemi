@@ -930,17 +930,33 @@ body.role-teacher .admin-only {
   display: block !important;
 }
 
-/* Rol Güvenliği: Uygun rol olmadan ilgili sayfa active olsa dahi gösterilmez */
-body:not(.role-admin) #page-admin {
+/* Rol Güvenliği: Uygun rol olmadan veya sekme active olmadan ilgili sayfa ASLA gösterilmez */
+#page-admin {
   display: none !important;
 }
-body:not(.role-teacher):not(.role-admin) #page-students {
+body.role-admin #page-admin.active {
+  display: block !important;
+}
+
+#page-dashboard {
   display: none !important;
+}
+#page-dashboard.active {
+  display: block !important;
+}
+
+#page-students {
+  display: none !important;
+}
+body.role-teacher #page-students.active,
+body.role-admin #page-students.active {
+  display: block !important;
 }
 
 .admin-only,
 .teacher-only,
-.student-only {
+.student-only,
+.teacher-and-admin-only {
   display: none !important;
 }
 
@@ -952,16 +968,34 @@ body.role-admin .btn.admin-only {
 body.role-admin .admin-only:not(.page-container):not(.nav-item):not(.btn) {
   display: block !important;
 }
+body.role-admin .teacher-and-admin-only {
+  display: block !important;
+}
+body.role-admin .btn.teacher-and-admin-only {
+  display: inline-flex !important;
+}
 
 /* 2. ÖĞRETMEN / KOÇ */
 body.role-teacher .nav-item.teacher-only,
 body.role-teacher .btn.teacher-only {
   display: flex !important;
 }
-body.role-teacher .student-selector-box.teacher-only {
+body.role-teacher .teacher-only:not(.page-container):not(.nav-item):not(.btn):not(.student-selector-box) {
   display: block !important;
 }
-body.role-teacher .teacher-only:not(.page-container):not(.nav-item):not(.btn):not(.student-selector-box) {
+body.role-teacher .teacher-and-admin-only {
+  display: block !important;
+}
+body.role-teacher .btn.teacher-and-admin-only {
+  display: inline-flex !important;
+}
+
+/* Öğrenci seçici kutusu: Öğretmen ve Yöneticide görünür, öğrenci portalında gizlenir */
+body.role-student #sidebarStudentSelectorBox {
+  display: none !important;
+}
+body.role-teacher #sidebarStudentSelectorBox,
+body.role-admin #sidebarStudentSelectorBox {
   display: block !important;
 }
 
@@ -972,9 +1006,6 @@ body.role-student .btn.student-only {
 }
 body.role-student .student-only:not(.page-container):not(.nav-item):not(.btn) {
   display: block !important;
-}
-body.role-student #sidebarStudentSelectorBox {
-  display: none !important;
 }
 
 @media print {
