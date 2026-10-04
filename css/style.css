@@ -1161,25 +1161,49 @@ body.role-student .student-only:not(.page-container):not(.nav-item):not(.btn) {
 }
 
 @media print {
-  body {
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
     background: white !important;
+    color: #0f172a !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
-  .sidebar, .topbar, .btn, .student-selector-box, .toast-container, .modal-overlay, #printBtnBar {
-    display: none !important;
-  }
-  .app-layout {
+  .app-layout, .main-wrapper {
     display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .sidebar, .topbar, .btn, .student-selector-box, .toast-container, .modal-overlay, #printBtnBar, #authWrapper {
+    display: none !important;
   }
   .page-container {
     display: none !important;
   }
   #page-karne {
     display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
   .karne-document {
     border: none !important;
-    padding: 0 !important;
-    max-width: 100% !important;
+    box-shadow: none !important;
+    padding: 10px 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 850px !important;
+  }
+  .karne-profile-grid, .karne-table th, .karne-coach-notes-box {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
