@@ -37,11 +37,18 @@ class App {
         roleBadgeEl.className = "badge badge-primary";
         roleBadgeEl.textContent = "⚙️ Sistem Yöneticisi";
       }
+      if (this.currentTab !== "admin") {
+        this.switchTab("admin");
+      }
     } else if (role === "teacher") {
       if (userNameEl) userNameEl.textContent = user?.name || "Öğretmen";
       if (roleBadgeEl) {
         roleBadgeEl.className = "badge badge-success";
         roleBadgeEl.textContent = "👨‍🏫 Öğretmen / Koç";
+      }
+      // Öğretmen admin sekmesinde ASLA kalamaz!
+      if (this.currentTab === "admin") {
+        this.switchTab("students");
       }
     } else if (role === "student") {
       if (userNameEl) userNameEl.textContent = user?.name || "Öğrenci";
@@ -50,7 +57,9 @@ class App {
         roleBadgeEl.textContent = "🎓 Öğrenci Portalı";
       }
       // Öğrenci doğrudan dashboard'a gelsin
-      if (this.currentTab === "admin") this.currentTab = "dashboard";
+      if (this.currentTab === "admin" || this.currentTab === "students") {
+        this.switchTab("dashboard");
+      }
     }
   }
 
@@ -69,6 +78,7 @@ class App {
       const res = window.store.loginTeacher(u, p);
       if (res.success) {
         this.checkAuth();
+        this.switchTab("students");
         this.showToast(`Hoş geldiniz, ${res.user.name}!`, "success");
       } else {
         alert(res.message);
@@ -82,6 +92,7 @@ class App {
       const res = window.store.loginStudent(u, p);
       if (res.success) {
         this.checkAuth();
+        this.switchTab("dashboard");
         this.showToast(`Hoş geldin, ${res.student.name}!`, "success");
       } else {
         alert(res.message);
@@ -122,6 +133,7 @@ class App {
     });
 
     // 6. Hızlı Butonlar
+    document.getElementById("btnQuickAddStudent")?.addEventListener("click", () => this.openModal("modalStudent"));
     document.getElementById("btnQuickAddExam")?.addEventListener("click", () => this.openModal("modalExam"));
     document.getElementById("btnQuickAddQuestion")?.addEventListener("click", () => this.openModal("modalQuestion"));
     document.getElementById("btnQuickKarne")?.addEventListener("click", () => this.switchTab("karne"));
@@ -129,6 +141,7 @@ class App {
     // 7. Modal Açma Butonları
     document.getElementById("btnOpenNewTeacherModal")?.addEventListener("click", () => this.openModal("modalTeacher"));
     document.getElementById("btnOpenNewStudentModal")?.addEventListener("click", () => this.openModal("modalStudent"));
+    document.getElementById("btnOpenNewStudentModalFromPage")?.addEventListener("click", () => this.openModal("modalStudent"));
     document.getElementById("btnOpenNewExamModal")?.addEventListener("click", () => this.openModal("modalExam"));
     document.getElementById("btnOpenNewQuestionModal")?.addEventListener("click", () => this.openModal("modalQuestion"));
     document.getElementById("btnOpenBulkCourseAttendanceModal")?.addEventListener("click", () => this.openModal("modalBulkCourseAttendance"));
@@ -200,6 +213,7 @@ class App {
 
     const titles = {
       admin: { title: "Öğretmen ve Koç Yönetimi", sub: "Sistem yöneticisi öğretmen tanımlama ve şifre paneli" },
+      students: { title: "Öğrenci Yönetimi ve Giriş Tanımlama", sub: "Koçluk yapılan öğrencileri tanımlama, kullanıcı adı, şifre ve hedef yönetimi" },
       dashboard: { title: "Genel Bakış", sub: "Öğrenci gelişim ve koçluk paneli" },
       exams: { title: "Deneme Sınavları", sub: "TYT ve AYT sonuçları, ders netleri ve puan takibi" },
       questions: { title: "Soru Takip Çizelgesi", sub: "Ders bazlı soru çözüm hedefleri ve günlüğü" },
@@ -216,6 +230,8 @@ class App {
       this.renderCharts();
     } else if (tabId === "admin") {
       this.renderTeachersTable();
+    } else if (tabId === "students") {
+      this.renderStudentsTable();
     } else if (tabId === "analysis") {
       this.renderAnalysisDetails();
     } else if (tabId === "karne") {
@@ -228,6 +244,8 @@ class App {
     const role = window.store.getRole();
     if (role === "admin") {
       this.renderTeachersTable();
+    } else if (role === "teacher") {
+      this.renderStudentsTable();
     }
 
     this.renderStudentSelector();
@@ -288,6 +306,68 @@ class App {
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  renderStudentsTable() {
+    const tbody = document.getElementById("studentsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const students = window.store.getStudents();
+    if (students.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">Henüz tanımlanmış öğrenci bulunmuyor. Yeni öğrenci eklemek için "+ Yeni Öğrenci Tanımla" butonuna basınız.</td></tr>`;
+      return;
+    }
+
+    students.forEach(s => {
+      const tr = document.createElement("tr");
+      const isCurrent = s.id === window.store.activeStudentId;
+      const initials = s.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+      tr.innerHTML = `
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:50%; background:${s.avatarColor || 'var(--primary)'}; color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0;">
+              ${initials}
+            </div>
+            <div>
+              <strong style="color:var(--text-main); font-size:13px;">${s.name}</strong>
+              ${isCurrent ? `<span class="badge badge-success" style="font-size:10px; margin-left:6px;">Seçili Öğrenci</span>` : ''}
+            </div>
+          </div>
+        </td>
+        <td><span class="badge badge-primary">${s.field}</span></td>
+        <td><span class="badge badge-outline">${s.grade}</span></td>
+        <td><code>${s.username}</code></td>
+        <td><code style="background:#fef3c7; color:#92400e; font-weight:700; padding:2px 6px; border-radius:4px;">${s.password}</code></td>
+        <td><span style="font-size:12px; color:var(--text-main);">${s.targetUniversity || '-'} - ${s.targetDepartment || '-'}</span></td>
+        <td><span style="font-size:12px; font-weight:600; color:var(--primary);">TYT: ${s.targetTytNet || '-'} | AYT: ${s.targetAytNet || '-'}</span></td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.selectStudentFromTable('${s.id}')">Profili Aç</button>
+            <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteStudent('${s.id}')">Sil</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  selectStudentFromTable(studentId) {
+    window.store.setActiveStudent(studentId);
+    this.refreshAll();
+    this.switchTab("dashboard");
+    this.showToast("Öğrenci profili seçildi ve Genel Bakış açıldı.", "success");
+  }
+
+  deleteStudent(studentId) {
+    const student = window.store.getStudents().find(s => s.id === studentId);
+    const name = student ? student.name : "Öğrenci";
+    if (confirm(`"${name}" adlı öğrenciyi ve tüm kayıtlarını silmek istediğinize emin misiniz?`)) {
+      window.store.deleteStudent(studentId);
+      this.refreshAll();
+      this.renderStudentsTable();
+      this.showToast(`${name} başarıyla silindi.`, "info");
+    }
   }
 
   renderHeroCard(student) {
@@ -899,6 +979,7 @@ class App {
     this.closeModal("modalStudent");
     document.getElementById("formStudent").reset();
     this.refreshAll();
+    this.renderStudentsTable();
     this.showToast(`Öğrenci (${newStudent.name}) hesabı tanımlandı!`, "success");
   }
 
