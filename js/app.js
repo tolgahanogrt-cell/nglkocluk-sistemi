@@ -195,10 +195,6 @@ class App {
     document.getElementById("sidebarSectionSelect")?.addEventListener("change", () => syncFiltersAndPopulate("sidebar"));
     document.getElementById("filterGrade")?.addEventListener("change", () => syncFiltersAndPopulate("dashboard"));
     document.getElementById("filterSection")?.addEventListener("change", () => syncFiltersAndPopulate("dashboard"));
-    document.getElementById("filterStudentName")?.addEventListener("input", () => {
-      this.renderStudentSelector();
-      this.refreshAll();
-    });
 
     document.getElementById("studentSelect")?.addEventListener("change", (e) => {
       const val = e.target.value;
@@ -475,12 +471,9 @@ class App {
     const role = window.store.getRole();
     if (role === "student") return;
 
-    const allStudents = window.store.getStudents();
-
-    // Filtre Değerleri (Store veya Input)
-    const gradeFilter = window.store.filterGrade || document.getElementById("sidebarGradeSelect")?.value || document.getElementById("filterGrade")?.value || "";
-    const sectionFilter = window.store.filterSection || document.getElementById("sidebarSectionSelect")?.value || document.getElementById("filterSection")?.value || "";
-    const nameSearch = (document.getElementById("filterStudentName")?.value || "").toLowerCase().trim();
+    // Filtre Değerleri (Store)
+    const gradeFilter = window.store.filterGrade || "";
+    const sectionFilter = window.store.filterSection || "";
 
     // Sınıf ve Şube dropdownlarını senkronize et
     const sideGrade = document.getElementById("sidebarGradeSelect");
@@ -493,63 +486,76 @@ class App {
     if (sideSection && sideSection.value !== sectionFilter) sideSection.value = sectionFilter;
     if (dashSection && dashSection.value !== sectionFilter) dashSection.value = sectionFilter;
 
-    // Filtrelenmiş öğrenci listesi
-    const filtered = window.store.getFilteredStudents(gradeFilter, sectionFilter, nameSearch);
-    const activeId = window.store.activeStudentId || "ALL";
-
-    let gradeLabel = gradeFilter ? `${gradeFilter}. Sınıf` : "Tüm Sınıflar";
-    let sectionLabel = sectionFilter ? `${sectionFilter} Şubesi` : "Tüm Şubeler";
-    const allOptionText = `👥 Tüm Öğrenciler (${gradeLabel} - ${sectionLabel} Toplu)`;
-
-    // 1. Sidebar Seçiciyi Doldur
     const sidebarSelect = document.getElementById("studentSelect");
-    if (sidebarSelect) {
-      sidebarSelect.innerHTML = "";
-      const optAll = document.createElement("option");
-      optAll.value = "ALL";
-      optAll.textContent = allOptionText;
-      if (activeId === "ALL") optAll.selected = true;
-      sidebarSelect.appendChild(optAll);
-
-      filtered.forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s.id;
-        const sSec = s.section ? ` - ${s.section} Şubesi` : "";
-        opt.textContent = `${s.name} (${s.grade || ''}${sSec} • ${s.field})`;
-        if (s.id === activeId) opt.selected = true;
-        sidebarSelect.appendChild(opt);
-      });
-    }
-
-    // 2. Dashboard Filtre Seçicisini Doldur
     const dashSelect = document.getElementById("dashStudentSelect");
     const countBadge = document.getElementById("filterStudentCountBadge");
-    if (dashSelect) {
-      dashSelect.innerHTML = "";
-      const optAll = document.createElement("option");
-      optAll.value = "ALL";
-      optAll.textContent = allOptionText;
-      if (activeId === "ALL") optAll.selected = true;
-      dashSelect.appendChild(optAll);
 
-      filtered.forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s.id;
-        const sSec = s.section ? ` - ${s.section} Şubesi` : "";
-        opt.textContent = `${s.name} (${s.grade || ''}${sSec} | ${s.field})`;
-        if (s.id === activeId) opt.selected = true;
-        dashSelect.appendChild(opt);
-      });
+    // Sınıf veya Şube seçilmemişse -> PASİF (disabled)
+    if (!gradeFilter || !sectionFilter) {
+      const passiveHtml = `<option value="" disabled selected>Önce Sınıf ve Şube Seçiniz...</option>`;
+      if (sidebarSelect) {
+        sidebarSelect.innerHTML = passiveHtml;
+        sidebarSelect.disabled = true;
+      }
+      if (dashSelect) {
+        dashSelect.innerHTML = passiveHtml;
+        dashSelect.disabled = true;
+      }
+      if (countBadge) {
+        countBadge.textContent = "Sınıf ve Şube Seçiniz";
+        countBadge.className = "badge badge-outline";
+      }
+      return;
     }
 
-    if (countBadge) {
-      if (activeId === "ALL") {
-        countBadge.textContent = `${filtered.length} Öğrenci (Toplu Görünüm)`;
-        countBadge.className = "badge badge-success";
-      } else {
-        countBadge.textContent = `1 / ${filtered.length} Öğrenci`;
-        countBadge.className = "badge badge-primary";
+    // Sınıf VE Şube seçilmişse -> AKTİF (disabled = false)
+    const filtered = window.store.getFilteredStudents(gradeFilter, sectionFilter);
+
+    if (sidebarSelect) sidebarSelect.disabled = false;
+    if (dashSelect) dashSelect.disabled = false;
+
+    if (filtered.length === 0) {
+      const emptyHtml = `<option value="" disabled selected>Bu sınıfta öğrenci yok</option>`;
+      if (sidebarSelect) {
+        sidebarSelect.innerHTML = emptyHtml;
+        sidebarSelect.disabled = true;
       }
+      if (dashSelect) {
+        dashSelect.innerHTML = emptyHtml;
+        dashSelect.disabled = true;
+      }
+      if (countBadge) {
+        countBadge.textContent = `0 Öğrenci (${gradeFilter}-${sectionFilter})`;
+        countBadge.className = "badge badge-warning";
+      }
+      return;
+    }
+
+    // Aktif öğrenci bu filtrede var mı?
+    let activeId = window.store.activeStudentId;
+    const exists = filtered.some(s => s.id === activeId);
+    if (!exists) {
+      activeId = filtered[0].id;
+      window.store.activeStudentId = activeId;
+    }
+
+    // SADECE ÖĞRENCİNİN ADI görünsün!
+    const buildOptions = () => {
+      let html = "";
+      filtered.forEach(s => {
+        const isSel = s.id === activeId ? "selected" : "";
+        html += `<option value="${s.id}" ${isSel}>${s.name}</option>`;
+      });
+      return html;
+    };
+
+    const optionsHtml = buildOptions();
+    if (sidebarSelect) sidebarSelect.innerHTML = optionsHtml;
+    if (dashSelect) dashSelect.innerHTML = optionsHtml;
+
+    if (countBadge) {
+      countBadge.textContent = `${filtered.length} Öğrenci (${gradeFilter}-${sectionFilter} Şubesi)`;
+      countBadge.className = "badge badge-primary";
     }
   }
 
@@ -1943,8 +1949,36 @@ class App {
   }
 
   renderEmptyState() {
-    document.getElementById("heroName").textContent = "Kayıtlı Öğrenci Yok";
-    document.getElementById("heroTarget").textContent = "Lütfen '+ Öğrenci' butonundan öğrenci tanımlayınız.";
+    const isFilterMissing = !window.store.filterGrade || !window.store.filterSection;
+    const heroName = document.getElementById("heroName");
+    const heroTarget = document.getElementById("heroTarget");
+    const heroBadges = document.getElementById("heroBadges");
+    if (heroName) heroName.textContent = isFilterMissing ? "Öğrenci Seçiniz" : "Kayıtlı Öğrenci Yok";
+    if (heroTarget) heroTarget.textContent = isFilterMissing 
+      ? "Öğrenci verilerini görüntülemek için lütfen yukarıdan veya sol panelden Sınıf ve Şube seçiniz."
+      : "Seçilen sınıf ve şubede kayıtlı öğrenci bulunmuyor.";
+    if (heroBadges) heroBadges.innerHTML = "";
+
+    const countBadge = document.getElementById("filterStudentCountBadge");
+    if (countBadge) {
+      countBadge.textContent = "Sınıf ve Şube Seçiniz";
+      countBadge.className = "badge badge-outline";
+    }
+
+    const emptyTr = `<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">${isFilterMissing ? "Öğrenci verilerini görüntülemek için lütfen önce Sınıf ve Şube seçiniz." : "Bu sınıfta kayıtlı öğrenci bulunmuyor."}</td></tr>`;
+    const tbExams = document.getElementById("examsTableBody");
+    if (tbExams) tbExams.innerHTML = emptyTr;
+    const tbQuestions = document.getElementById("questionsTableBody");
+    if (tbQuestions) tbQuestions.innerHTML = emptyTr;
+    const tbAttendance = document.getElementById("courseAttendanceTableBody");
+    if (tbAttendance) tbAttendance.innerHTML = emptyTr;
+    const contSessions = document.getElementById("coachingSessionsContainer");
+    if (contSessions) contSessions.innerHTML = `<p style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">${isFilterMissing ? "Lütfen önce Sınıf ve Şube seçiniz." : "Bu sınıfta kayıtlı öğrenci bulunmuyor."}</p>`;
+
+    ["heroExamCount", "heroQuestionCount", "heroAttendanceCount", "heroSessionCount"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = "-";
+    });
   }
 }
 
