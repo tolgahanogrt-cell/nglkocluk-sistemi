@@ -122,6 +122,13 @@ class AppStore {
         if (parsed && (!parsed.admin || !parsed.admin.title)) {
           parsed.admin = JSON.parse(JSON.stringify(INITIAL_DEMO_DATA.admin));
         }
+        if (parsed && parsed.teachers) {
+          parsed.teachers.forEach(t => {
+            if (t.branch === "Rehberlik ve Koçluk") {
+              t.branch = "Rehberlik ve Psikolojik Danışmanlık";
+            }
+          });
+        }
         if (parsed && parsed.students) {
           parsed.students.forEach(s => {
             if (!s.section) {
@@ -171,7 +178,7 @@ class AppStore {
     const newTeacher = {
       id: "tch-" + Date.now(),
       name: teacherData.name,
-      branch: teacherData.branch || "Rehberlik ve Koçluk",
+      branch: teacherData.branch || "Rehberlik ve Psikolojik Danışmanlık",
       username: teacherData.username.toLowerCase().trim(),
       password: teacherData.password.trim(),
       email: teacherData.email || "",
