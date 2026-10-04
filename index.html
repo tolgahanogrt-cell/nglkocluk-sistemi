@@ -16,7 +16,7 @@
   <script src="lib/chart.umd.min.js"></script>
   <!-- Tailwind 2 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=5.0">
+  <link rel="stylesheet" href="css/style.css?v=5.3">
 </head>
 <body>
 
@@ -649,14 +649,38 @@
 
       <!-- ================= SEKME 3: SORU TAKİP ÇİZELGESİ ================= -->
       <section id="page-questions" class="page-container">
-        <div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
-          <div class="card" style="flex: 1; min-width: 280px; margin-bottom: 0;">
-            <div class="card-header">
-              <h3>Haftalık Soru Hedef Takibi</h3>
+        <!-- 1. Dönem Filtresi ve Hızlı Bilgi Barı (Haftalık, Aylık, Genel) -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-body" style="padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Zaman Dilimi:
+              </span>
+              <div class="btn-group" id="questionPeriodBtnGroup" style="display: inline-flex; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 3px; gap: 4px;">
+                <button type="button" class="btn btn-sm btn-period active" data-q-period="weekly">📅 Haftalık (Son 7 Gün)</button>
+                <button type="button" class="btn btn-sm btn-period" data-q-period="monthly">🗓️ Aylık (Son 30 Gün)</button>
+                <button type="button" class="btn btn-sm btn-period" data-q-period="all">🌐 Genel (Tüm Dönem)</button>
+              </div>
             </div>
-            <div class="card-body">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="questionPeriodInfoText" class="badge badge-outline" style="font-size: 11px; padding: 5px 10px; font-weight: 600;">
+                Son 7 Günlük Kayıtlar
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Soru Hedef Takip İlerleme Çubuğu -->
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div class="card" style="flex: 1; min-width: 280px; margin-bottom: 0;">
+            <div class="card-header" style="padding: 12px 18px;">
+              <h3 id="qTargetCardTitle">Haftalık Soru Hedef Takibi</h3>
+              <span class="badge badge-primary" id="qTargetPeriodBadge">Son 7 Gün</span>
+            </div>
+            <div class="card-body" style="padding: 14px 18px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-                <span style="font-size: 13px; color: var(--text-muted);">Haftalık Hedef:</span>
+                <span id="qTargetLabel" style="font-size: 13px; color: var(--text-muted);">Haftalık Hedef:</span>
                 <strong id="qTargetCount">1400 Soru</strong>
               </div>
               <div class="progress-bar-bg" style="height: 10px;">
@@ -670,15 +694,42 @@
           </div>
         </div>
 
+        <!-- 3. Her Dersten Kaç Soru Çözüldüğünü Gösteren Özet Kartlar -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header" style="padding: 12px 18px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 id="questionCardsHeaderTitle">Ders Bazlı Soru Çözüm Özeti</h3>
+              <span class="badge badge-success" id="questionCardsCountBadge">0 Ders</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                <span>💡</span> Tabloyu filtrelemek için derse tıklayabilirsiniz
+              </span>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnClearSubjectFilter" style="display: none; padding: 3px 9px; font-size: 11px;">
+                ✕ Filtreyi Kaldır
+              </button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 14px 18px;">
+            <div id="questionSubjectCardsGrid" class="subject-cards-grid">
+              <!-- Dinamik JS Ders Kartları -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Günlük ve Haftalık Soru Çözüm Günlüğü Tablosu (Daraltılmış / Kompakt) -->
         <div class="card">
-          <div class="card-header">
-            <h3>Günlük ve Haftalık Soru Çözüm Günlüğü</h3>
+          <div class="card-header" style="padding: 12px 18px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h3 id="questionsTableTitle">Soru Çözüm Günlüğü Kayıtları</h3>
+              <span class="badge badge-info" id="activeSubjectBadge" style="display: none; font-size: 11px;"></span>
+            </div>
             <!-- Öğrenci de bu butonu kullanabilir! -->
             <button class="btn btn-primary btn-sm" id="btnOpenNewQuestionModal">+ Soru Kaydı Ekle</button>
           </div>
           <div class="card-body" style="padding: 0;">
             <div class="table-responsive">
-              <table class="data-table">
+              <table class="data-table compact-table">
                 <thead>
                   <tr>
                     <th>Tarih</th>
@@ -688,7 +739,7 @@
                     <th>Yanlış</th>
                     <th>Başarı (%)</th>
                     <th>Süre (Dk)</th>
-                    <th style="text-align:center; min-width:145px;">İşlemler</th>
+                    <th style="text-align:center; min-width:140px;">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody id="questionsTableBody">
@@ -1573,10 +1624,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=5.2"></script>
-  <script src="js/store.js?v=5.2"></script>
-  <script src="js/analytics.js?v=5.2"></script>
-  <script src="js/charts.js?v=5.2"></script>
-  <script src="js/app.js?v=5.2"></script>
+  <script src="js/models.js?v=5.3"></script>
+  <script src="js/store.js?v=5.3"></script>
+  <script src="js/analytics.js?v=5.3"></script>
+  <script src="js/charts.js?v=5.3"></script>
+  <script src="js/app.js?v=5.3"></script>
 </body>
 </html>
