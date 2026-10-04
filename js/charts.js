@@ -243,6 +243,83 @@ class ChartManager {
     });
   }
 
+  // AYT Branş Başarı Dağılımı Radar Grafiği
+  static renderAytSubjectRadar(canvasId, student) {
+    this.destroyChart(canvasId);
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const lastAyt = [...(student.exams || [])].filter(e => e.type === "AYT").pop();
+    if (!lastAyt || !lastAyt.ayt) {
+      this.renderEmptyState(canvasId, "Ders dağılımı için AYT denemesi bulunamadı.");
+      return;
+    }
+
+    const ayt = lastAyt.ayt;
+    let labels = [];
+    let percentages = [];
+
+    if (student.field === "Eşit Ağırlık" || (ayt.edebiyat && !ayt.fizik)) {
+      labels = ["AYT Matematik (% Net)", "Edebiyat (% Net)", "Tarih-1 (% Net)", "Coğrafya-1 (% Net)"];
+      percentages = [
+        Math.min(100, Math.max(0, Math.round(((ayt.matematik?.net || 0) / 40) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.edebiyat?.net || 0) / 24) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.tarih1?.net || 0) / 10) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.cografya1?.net || 0) / 6) * 100)))
+      ];
+    } else {
+      // Sayısal (Varsayılan Fen Lisesi)
+      labels = ["AYT Matematik (% Net)", "Fizik (% Net)", "Kimya (% Net)", "Biyoloji (% Net)"];
+      percentages = [
+        Math.min(100, Math.max(0, Math.round(((ayt.matematik?.net || 0) / 40) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.fizik?.net || 0) / 14) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.kimya?.net || 0) / 13) * 100))),
+        Math.min(100, Math.max(0, Math.round(((ayt.biyoloji?.net || 0) / 13) * 100)))
+      ];
+    }
+
+    this.instances[canvasId] = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Son AYT Başarı Yüzdesi (%)",
+            data: percentages,
+            borderColor: "#059669",
+            backgroundColor: "rgba(5, 150, 105, 0.2)",
+            borderWidth: 2,
+            pointBackgroundColor: "#059669",
+            pointRadius: 5
+          },
+          {
+            label: "%100 Başarı Kotası",
+            data: labels.map(() => 100),
+            borderColor: "rgba(200, 200, 200, 0.4)",
+            borderDash: [4, 4],
+            fill: false,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { stepSize: 25, display: false },
+            grid: { color: "rgba(150, 150, 150, 0.15)" }
+          }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 12 } }
+        }
+      }
+    });
+  }
+
   // Haftalık Soru Çözüm Dağılımı (Bar Chart)
   static renderWeeklyQuestionsChart(canvasId, questionLogs) {
     this.destroyChart(canvasId);
