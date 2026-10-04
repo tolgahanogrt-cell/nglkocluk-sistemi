@@ -1,57 +1,85 @@
-// Öğrenci Koçluk Sistemi - Veri Depolama ve İşlem Yöneticisi (Store)
+// Öğrenci Koçluk Sistemi - Veri Depolama ve Rol Yönetimi (Store)
 
-const STORAGE_KEY = "kocluk_sistemi_db_v1";
+const STORAGE_KEY = "ngfl_kocluk_db_v2";
 
 class AppStore {
   constructor() {
     this.data = this.loadFromStorage();
+    this.authRole = sessionStorage.getItem("kocluk_auth_role") || null; // 'admin' | 'teacher' | 'student'
+    this.currentUser = JSON.parse(sessionStorage.getItem("kocluk_auth_user") || "null");
     this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : null);
-    this.authRole = sessionStorage.getItem("kocluk_auth_role") || null;
-    this.authStudentId = sessionStorage.getItem("kocluk_auth_student_id") || null;
   }
 
-  // --- Kimlik Doğrulama (Auth) ---
+  // --- Kimlik Doğrulama ve Giriş Metodları ---
   isAuthenticated() {
-    return this.authRole !== null;
+    return this.authRole !== null && this.currentUser !== null;
   }
 
   getRole() {
     return this.authRole;
   }
 
-  loginCoach(password, rememberMe = true) {
-    const validPassword = this.data.coachPassword || "1234";
-    if (password === validPassword || password === "admin" || password === "123456") {
-      this.authRole = "coach";
-      this.authStudentId = null;
-      sessionStorage.setItem("kocluk_auth_role", "coach");
-      if (rememberMe) localStorage.setItem("kocluk_remember_coach", "true");
-      return { success: true };
-    }
-    return { success: false, message: "Hatalı koç şifresi! (Varsayılan: 1234)" };
+  getCurrentUser() {
+    return this.currentUser;
   }
 
-  loginStudent(studentId, pin = "") {
-    const student = this.data.students.find(s => s.id === studentId);
-    if (!student) return { success: false, message: "Öğrenci bulunamadı." };
+  // 1. Sistem Yöneticisi Girişi
+  loginAdmin(username, password) {
+    const admin = this.data.admin || { username: "admin", password: "123", name: "Sistem Yöneticisi" };
+    if (username === admin.username && password === admin.password) {
+      this.authRole = "admin";
+      this.currentUser = { role: "admin", name: admin.name, username: admin.username };
+      sessionStorage.setItem("kocluk_auth_role", "admin");
+      sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+      return { success: true, user: this.currentUser };
+    }
+    return { success: false, message: "Yönetici kullanıcı adı veya şifresi hatalı!" };
+  }
 
-    this.authRole = "student";
-    this.authStudentId = student.id;
-    this.activeStudentId = student.id;
-    sessionStorage.setItem("kocluk_auth_role", "student");
-    sessionStorage.setItem("kocluk_auth_student_id", student.id);
-    this.saveToStorage();
-    return { success: true, student };
+  // 2. Öğretmen / Koç Girişi
+  loginTeacher(username, password) {
+    const teachers = this.data.teachers || [];
+    const teacher = teachers.find(t => t.username.toLowerCase() === username.toLowerCase() && t.password === password);
+    if (teacher) {
+      this.authRole = "teacher";
+      this.currentUser = { role: "teacher", id: teacher.id, name: teacher.name, branch: teacher.branch, username: teacher.username };
+      sessionStorage.setItem("kocluk_auth_role", "teacher");
+      sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+      
+      // İlk öğrencisini seç
+      const teacherStudents = this.getStudents();
+      if (teacherStudents.length > 0) {
+        this.activeStudentId = teacherStudents[0].id;
+      }
+      return { success: true, user: this.currentUser };
+    }
+    return { success: false, message: "Öğretmen kullanıcı adı veya şifresi hatalı!" };
+  }
+
+  // 3. Öğrenci Girişi
+  loginStudent(username, password) {
+    const students = this.data.students || [];
+    const student = students.find(s => s.username.toLowerCase() === username.toLowerCase() && s.password === password);
+    if (student) {
+      this.authRole = "student";
+      this.currentUser = { role: "student", id: student.id, name: student.name, username: student.username };
+      this.activeStudentId = student.id;
+      sessionStorage.setItem("kocluk_auth_role", "student");
+      sessionStorage.setItem("kocluk_auth_user", JSON.stringify(this.currentUser));
+      this.saveToStorage();
+      return { success: true, student };
+    }
+    return { success: false, message: "Öğrenci kullanıcı adı veya şifresi hatalı!" };
   }
 
   logout() {
     this.authRole = null;
-    this.authStudentId = null;
+    this.currentUser = null;
     sessionStorage.removeItem("kocluk_auth_role");
-    sessionStorage.removeItem("kocluk_auth_student_id");
-    localStorage.removeItem("kocluk_remember_coach");
+    sessionStorage.removeItem("kocluk_auth_user");
   }
 
+  // --- Veri Depolama ---
   loadFromStorage() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -59,9 +87,8 @@ class AppStore {
         return JSON.parse(stored);
       }
     } catch (e) {
-      console.warn("LocalStorage okunamadı, varsayılan demo verisi yükleniyor:", e);
+      console.warn("Veri okunamadı:", e);
     }
-    // İlk çalıştırma: demo verileri yükle
     const initial = JSON.parse(JSON.stringify(INITIAL_DEMO_DATA));
     initial.activeStudentId = initial.students[0] ? initial.students[0].id : null;
     this.saveToStorage(initial);
@@ -74,20 +101,60 @@ class AppStore {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       this.data = data;
     } catch (e) {
-      console.error("LocalStorage kaydetme hatası:", e);
+      console.error("Kayıt hatası:", e);
     }
   }
 
-  // --- Öğrenci İşlemleri ---
+  // --- Yönetici İşlemleri (Öğretmen Yönetimi) ---
+  getTeachers() {
+    return this.data.teachers || [];
+  }
+
+  addTeacher(teacherData) {
+    if (this.authRole !== "admin") return null;
+    if (!this.data.teachers) this.data.teachers = [];
+
+    const newTeacher = {
+      id: "tch-" + Date.now(),
+      name: teacherData.name,
+      branch: teacherData.branch || "Rehberlik ve Koçluk",
+      username: teacherData.username.toLowerCase().trim(),
+      password: teacherData.password.trim(),
+      email: teacherData.email || "",
+      createdAt: new Date().toISOString().split("T")[0]
+    };
+
+    this.data.teachers.push(newTeacher);
+    this.saveToStorage();
+    return newTeacher;
+  }
+
+  deleteTeacher(id) {
+    if (this.authRole !== "admin") return;
+    this.data.teachers = (this.data.teachers || []).filter(t => t.id !== id);
+    this.saveToStorage();
+  }
+
+  // --- Öğrenci İşlemleri (Öğretmen ve Yönetici) ---
   getStudents() {
-    return this.data.students || [];
+    const all = this.data.students || [];
+    if (this.authRole === "student" && this.currentUser) {
+      return all.filter(s => s.id === this.currentUser.id);
+    }
+    if (this.authRole === "teacher" && this.currentUser) {
+      // Öğretmene atanmış öğrencileri göster
+      const teacherStudents = all.filter(s => s.teacherId === this.currentUser.id);
+      return teacherStudents.length > 0 ? teacherStudents : all; // Eğer atanmamışsa tümünü görsün
+    }
+    return all;
   }
 
   getActiveStudent() {
-    if (!this.data.students || this.data.students.length === 0) return null;
-    let student = this.data.students.find(s => s.id === this.activeStudentId);
+    const students = this.getStudents();
+    if (students.length === 0) return null;
+    let student = students.find(s => s.id === this.activeStudentId);
     if (!student) {
-      student = this.data.students[0];
+      student = students[0];
       this.activeStudentId = student.id;
       this.saveToStorage();
     }
@@ -95,7 +162,9 @@ class AppStore {
   }
 
   setActiveStudent(id) {
-    const student = this.data.students.find(s => s.id === id);
+    if (this.authRole === "student") return null; // Öğrenci başka öğrenci seçemez
+    const students = this.getStudents();
+    const student = students.find(s => s.id === id);
     if (student) {
       this.activeStudentId = id;
       this.saveToStorage();
@@ -105,12 +174,18 @@ class AppStore {
   }
 
   addStudent(studentData) {
-    const colors = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#7c3aed", "#0284c7", "#db2777"];
+    if (this.authRole === "student") return null; // Yetki kontrolü
+
+    const colors = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#7c3aed", "#0284c7"];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
+    const teacherId = (this.authRole === "teacher" && this.currentUser) ? this.currentUser.id : "tch-1";
+
     const newStudent = {
       id: "std-" + Date.now(),
+      teacherId: teacherId,
       name: studentData.name,
+      username: (studentData.username || studentData.name.split(" ")[0].toLowerCase()).trim(),
+      password: (studentData.password || "123").trim(),
       field: studentData.field || "Sayısal",
       grade: studentData.grade || "12. Sınıf",
       targetUniversity: studentData.targetUniversity || "Hedef Üniversite",
@@ -118,73 +193,59 @@ class AppStore {
       targetTytNet: Number(studentData.targetTytNet) || 90,
       targetAytNet: Number(studentData.targetAytNet) || 60,
       targetWeeklyQuestions: Number(studentData.targetWeeklyQuestions) || 1200,
-      avatarColor: studentData.avatarColor || randomColor,
+      avatarColor: randomColor,
       notes: studentData.notes || "",
       createdAt: new Date().toISOString().split("T")[0],
       exams: [],
       questionLogs: [],
-      attendance: [],
-      coachingNotes: []
+      courseAttendance: [],
+      coachingSessions: []
     };
 
+    if (!this.data.students) this.data.students = [];
     this.data.students.push(newStudent);
     this.activeStudentId = newStudent.id;
     this.saveToStorage();
     return newStudent;
   }
 
-  updateStudent(id, updatedFields) {
-    const idx = this.data.students.findIndex(s => s.id === id);
-    if (idx !== -1) {
-      this.data.students[idx] = { ...this.data.students[idx], ...updatedFields };
-      this.saveToStorage();
-      return this.data.students[idx];
-    }
-    return null;
-  }
-
   deleteStudent(id) {
+    if (this.authRole === "student") return;
     this.data.students = this.data.students.filter(s => s.id !== id);
-    if (this.activeStudentId === id) {
-      this.activeStudentId = this.data.students[0] ? this.data.students[0].id : null;
-    }
+    const remaining = this.getStudents();
+    this.activeStudentId = remaining[0] ? remaining[0].id : null;
     this.saveToStorage();
   }
 
-  // --- Deneme Sınavı İşlemleri ---
+  // --- Deneme Sınavları (Öğretmen ve Yönetici) ---
   addExam(studentId, examData) {
+    if (this.authRole === "student") return null;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return null;
 
     if (!student.exams) student.exams = [];
-    const newExam = {
-      id: "ex-" + Date.now(),
-      ...examData
-    };
+    const newExam = { id: "ex-" + Date.now(), ...examData };
     student.exams.push(newExam);
-    // Tarihe göre sırala
     student.exams.sort((a, b) => new Date(a.date) - new Date(b.date));
     this.saveToStorage();
     return newExam;
   }
 
   deleteExam(studentId, examId) {
+    if (this.authRole === "student") return;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return;
     student.exams = student.exams.filter(e => e.id !== examId);
     this.saveToStorage();
   }
 
-  // --- Soru Takibi İşlemleri ---
+  // --- Soru Girişi (Öğrenci KENDİSİ DE GİREBİLİR!) ---
   addQuestionLog(studentId, logData) {
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return null;
 
     if (!student.questionLogs) student.questionLogs = [];
-    const newLog = {
-      id: "ql-" + Date.now(),
-      ...logData
-    };
+    const newLog = { id: "ql-" + Date.now(), ...logData };
     student.questionLogs.push(newLog);
     student.questionLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
     this.saveToStorage();
@@ -192,101 +253,62 @@ class AppStore {
   }
 
   deleteQuestionLog(studentId, logId) {
+    if (this.authRole === "student") return;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return;
     student.questionLogs = student.questionLogs.filter(l => l.id !== logId);
     this.saveToStorage();
   }
 
-  // --- Devamsızlık / Etüt İşlemleri ---
-  addAttendance(studentId, attendanceData) {
+  // --- Ders Devamsızlıkları (Toplu Takvim Seçimi) ---
+  addBulkCourseAttendance(studentId, attendanceList) {
+    if (this.authRole === "student") return null;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return null;
 
-    if (!student.attendance) student.attendance = [];
-    const newAtt = {
-      id: "at-" + Date.now(),
-      ...attendanceData
-    };
-    student.attendance.push(newAtt);
-    student.attendance.sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (!student.courseAttendance) student.courseAttendance = [];
+    attendanceList.forEach(item => {
+      student.courseAttendance.push({
+        id: "ca-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
+        ...item
+      });
+    });
+    student.courseAttendance.sort((a, b) => new Date(b.date) - new Date(a.date));
     this.saveToStorage();
-    return newAtt;
+    return true;
   }
 
-  deleteAttendance(studentId, attId) {
+  deleteCourseAttendance(studentId, attId) {
+    if (this.authRole === "student") return;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return;
-    student.attendance = student.attendance.filter(a => a.id !== attId);
+    student.courseAttendance = (student.courseAttendance || []).filter(a => a.id !== attId);
     this.saveToStorage();
   }
 
-  // --- Koçluk Notu / Ödev İşlemleri ---
-  addCoachingNote(studentId, noteData) {
+  // --- Koçluk Görüşmeleri ve Seansları ---
+  addCoachingSession(studentId, sessionData) {
+    if (this.authRole === "student") return null;
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return null;
 
-    if (!student.coachingNotes) student.coachingNotes = [];
-    const newNote = {
-      id: "cn-" + Date.now(),
-      date: noteData.date || new Date().toISOString().split("T")[0],
-      coachMood: noteData.coachMood || "İyi",
-      studentMotivation: Number(noteData.studentMotivation) || 8,
-      summary: noteData.summary || "",
-      assignments: noteData.assignments || []
+    if (!student.coachingSessions) student.coachingSessions = [];
+    const newSession = {
+      id: "cs-" + Date.now(),
+      ...sessionData
     };
-    student.coachingNotes.unshift(newNote);
+    student.coachingSessions.unshift(newSession);
     this.saveToStorage();
-    return newNote;
+    return newSession;
   }
 
-  // --- Taşınabilirlik: JSON Dışa / İçe Aktar ---
-  exportToJson() {
-    const dataStr = JSON.stringify(this.data, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const date = new Date().toISOString().split("T")[0];
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `kocluk_sistemi_yedek_${date}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  importFromJson(file, callback) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const parsed = JSON.parse(e.target.result);
-        if (parsed && Array.isArray(parsed.students)) {
-          this.data = parsed;
-          this.activeStudentId = parsed.students[0] ? parsed.students[0].id : null;
-          this.saveToStorage();
-          if (callback) callback(true, "Yedek başarıyla yüklendi!");
-        } else {
-          if (callback) callback(false, "Geçersiz dosya formatı. 'students' dizisi bulunamadı.");
-        }
-      } catch (err) {
-        if (callback) callback(false, "JSON dosyası okunurken hata oluştu: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  resetToDemo() {
-    this.data = JSON.parse(JSON.stringify(INITIAL_DEMO_DATA));
-    this.activeStudentId = this.data.students[0].id;
-    this.saveToStorage();
-  }
-
-  clearAllData() {
-    this.data = { students: [], activeStudentId: null };
-    this.activeStudentId = null;
+  deleteCoachingSession(studentId, sessionId) {
+    if (this.authRole === "student") return;
+    const student = this.data.students.find(s => s.id === studentId);
+    if (!student) return;
+    student.coachingSessions = (student.coachingSessions || []).filter(s => s.id !== sessionId);
     this.saveToStorage();
   }
 }
 
-// Global Store Instance
 window.store = new AppStore();
