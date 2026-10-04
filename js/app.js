@@ -675,9 +675,12 @@ class App {
       <head>
         <meta charset="UTF-8">
         <title>Öğrenci Karnesi - ${student.name}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: white; color: #0f172a; padding: 30px; }
+          body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif; background: white; color: #0f172a; padding: 30px; }
           .karne-document { width: 100%; max-width: 900px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 30px; }
           .karne-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 14px; margin-bottom: 20px; }
           .karne-logo-area { display: flex; align-items: center; gap: 12px; }
