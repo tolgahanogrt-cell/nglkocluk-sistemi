@@ -7,7 +7,9 @@ class AppStore {
     this.data = this.loadFromStorage();
     this.authRole = sessionStorage.getItem("kocluk_auth_role") || null; // 'admin' | 'teacher' | 'student'
     this.currentUser = JSON.parse(sessionStorage.getItem("kocluk_auth_user") || "null");
-    this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : null);
+    this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : "ALL");
+    this.filterGrade = "";
+    this.filterSection = "";
   }
 
   // --- Kimlik Doğrulama ve Giriş Metodları ---
@@ -148,22 +150,36 @@ class AppStore {
     this.saveToStorage();
   }
 
-  updateTeacherCredentials(teacherId, newUsername, newPassword) {
+  updateTeacher(teacherId, updatedFields) {
     if (this.authRole !== "admin") return { success: false, message: "Yalnızca yönetici güncelleyebilir." };
     const teacher = (this.data.teachers || []).find(t => t.id === teacherId);
     if (!teacher) return { success: false, message: "Öğretmen bulunamadı." };
 
-    if (!teacher.previousCredentials) teacher.previousCredentials = [];
-    teacher.previousCredentials.unshift({
-      username: teacher.username,
-      password: teacher.password,
-      changedAt: new Date().toLocaleString("tr-TR")
-    });
+    if (updatedFields.username || updatedFields.password) {
+      const u = updatedFields.username ? updatedFields.username.toLowerCase().trim() : teacher.username;
+      const p = updatedFields.password ? updatedFields.password.trim() : teacher.password;
+      if (u !== teacher.username || p !== teacher.password) {
+        if (!teacher.previousCredentials) teacher.previousCredentials = [];
+        teacher.previousCredentials.unshift({
+          username: teacher.username,
+          password: teacher.password,
+          changedAt: new Date().toLocaleString("tr-TR")
+        });
+      }
+      teacher.username = u;
+      teacher.password = p;
+    }
 
-    teacher.username = newUsername.toLowerCase().trim();
-    teacher.password = newPassword.trim();
+    if (updatedFields.name) teacher.name = updatedFields.name.trim();
+    if (updatedFields.branch) teacher.branch = updatedFields.branch.trim();
+    if (updatedFields.email !== undefined) teacher.email = updatedFields.email.trim();
+
     this.saveToStorage();
     return { success: true, teacher };
+  }
+
+  updateTeacherCredentials(teacherId, newUsername, newPassword) {
+    return this.updateTeacher(teacherId, { username: newUsername, password: newPassword });
   }
 
   // --- Öğrenci İşlemleri (Öğretmen ve Yönetici) ---
@@ -173,27 +189,163 @@ class AppStore {
       return all.filter(s => s.id === this.currentUser.id);
     }
     if (this.authRole === "teacher" && this.currentUser) {
-      // Öğretmene atanmış öğrencileri göster
       const teacherStudents = all.filter(s => s.teacherId === this.currentUser.id);
-      return teacherStudents.length > 0 ? teacherStudents : all; // Eğer atanmamışsa tümünü görsün
+      return teacherStudents.length > 0 ? teacherStudents : all;
     }
     return all;
   }
 
-  getActiveStudent() {
-    const students = this.getStudents();
-    if (students.length === 0) return null;
-    let student = students.find(s => s.id === this.activeStudentId);
-    if (!student) {
-      student = students[0];
-      this.activeStudentId = student.id;
-      this.saveToStorage();
+  setFilter(grade, section) {
+    this.filterGrade = grade || "";
+    this.filterSection = section || "";
+  }
+
+  getFilteredStudents(gradeFilter = this.filterGrade, sectionFilter = this.filterSection, nameSearch = "") {
+    const all = this.getStudents();
+    return all.filter(s => {
+      if (gradeFilter) {
+        const sGrade = (s.grade || "").toLowerCase();
+        if (gradeFilter.toLowerCase() === "mezun") {
+          if (!sGrade.includes("mezun")) return false;
+        } else {
+          if (!sGrade.includes(gradeFilter.toLowerCase())) return false;
+        }
+      }
+      if (sectionFilter) {
+        const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
+        if (sSec && sSec.toUpperCase() !== sectionFilter.toUpperCase()) return false;
+      }
+      if (nameSearch) {
+        if (!s.name.toLowerCase().includes(nameSearch.toLowerCase())) return false;
+      }
+      return true;
+    });
+  }
+
+  getAggregateStudent(gradeFilter = this.filterGrade, sectionFilter = this.filterSection) {
+    const students = this.getFilteredStudents(gradeFilter, sectionFilter);
+    const count = students.length;
+
+    let gradeLabel = gradeFilter ? (gradeFilter === "Mezun" ? "Mezun" : `${gradeFilter}. Sınıf`) : "Tüm Sınıflar";
+    let sectionLabel = sectionFilter ? `${sectionFilter} Şubesi` : "Tüm Şubeler";
+    let title = `Tüm Öğrenciler (${gradeLabel} - ${sectionLabel})`;
+
+    if (count === 0) {
+      return {
+        id: "ALL",
+        isAggregate: true,
+        studentCount: 0,
+        name: title,
+        field: "Genel",
+        grade: gradeLabel,
+        section: sectionLabel,
+        targetUniversity: "Nafi Güral Fen Lisesi",
+        targetDepartment: "Öğrenci Bulunamadı",
+        targetTytNet: 0,
+        targetAytNet: 0,
+        targetWeeklyQuestions: 0,
+        avatarColor: "#0f172a",
+        exams: [],
+        questionLogs: [],
+        courseAttendance: [],
+        coachingSessions: []
+      };
     }
-    return student;
+
+    const allExams = [];
+    students.forEach(s => {
+      (s.exams || []).forEach(e => {
+        allExams.push({
+          ...e,
+          originalExamId: e.id,
+          studentId: s.id,
+          studentName: s.name,
+          studentSection: s.section || ""
+        });
+      });
+    });
+
+    const allQuestionLogs = [];
+    students.forEach(s => {
+      (s.questionLogs || []).forEach(q => {
+        allQuestionLogs.push({
+          ...q,
+          studentId: s.id,
+          studentName: s.name
+        });
+      });
+    });
+
+    const allAttendance = [];
+    students.forEach(s => {
+      (s.courseAttendance || []).forEach(a => {
+        allAttendance.push({
+          ...a,
+          studentId: s.id,
+          studentName: s.name
+        });
+      });
+    });
+
+    const allSessions = [];
+    students.forEach(s => {
+      (s.coachingSessions || []).forEach(cs => {
+        allSessions.push({
+          ...cs,
+          studentId: s.id,
+          studentName: s.name
+        });
+      });
+    });
+
+    const avgTargetTyt = Math.round(students.reduce((sum, s) => sum + (Number(s.targetTytNet) || 0), 0) / count);
+    const avgTargetAyt = Math.round(students.reduce((sum, s) => sum + (Number(s.targetAytNet) || 0), 0) / count);
+    const avgTargetWeekly = Math.round(students.reduce((sum, s) => sum + (Number(s.targetWeeklyQuestions) || 1200), 0) / count);
+
+    return {
+      id: "ALL",
+      isAggregate: true,
+      studentCount: count,
+      name: title,
+      field: "Tüm Alanlar",
+      grade: gradeLabel,
+      section: sectionLabel,
+      targetUniversity: "Nafi Güral Fen Lisesi",
+      targetDepartment: `${count} Öğrenci Toplu Başarı Özeti`,
+      targetTytNet: avgTargetTyt,
+      targetAytNet: avgTargetAyt,
+      targetWeeklyQuestions: avgTargetWeekly,
+      avatarColor: "#0f172a",
+      exams: allExams,
+      questionLogs: allQuestionLogs,
+      courseAttendance: allAttendance,
+      coachingSessions: allSessions
+    };
+  }
+
+  getActiveStudent() {
+    const all = this.getStudents();
+    if (all.length === 0) return null;
+
+    if (this.authRole === "student" && this.currentUser) {
+      return all.find(s => s.id === this.currentUser.id) || all[0];
+    }
+
+    if (this.activeStudentId && this.activeStudentId !== "ALL") {
+      const found = all.find(s => s.id === this.activeStudentId);
+      if (found) return found;
+    }
+
+    return this.getAggregateStudent(this.filterGrade, this.filterSection);
   }
 
   setActiveStudent(id) {
-    if (this.authRole === "student") return null; // Öğrenci başka öğrenci seçemez
+    if (this.authRole === "student") return null;
+    if (id === "ALL") {
+      this.activeStudentId = "ALL";
+      this.saveToStorage();
+      return this.getActiveStudent();
+    }
     const students = this.getStudents();
     const student = students.find(s => s.id === id);
     if (student) {
@@ -249,20 +401,62 @@ class AppStore {
     this.saveToStorage();
   }
 
-  updateStudentCredentials(studentId, newUsername, newPassword) {
+  updateStudent(studentId, updatedFields) {
+    if (this.authRole === "student") return { success: false, message: "Öğrenciler bilgileri güncelleyemez." };
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    if (!student) return { success: false, message: "Öğrenci bulunamadı." };
+
+    if (updatedFields.username || updatedFields.password) {
+      const u = updatedFields.username ? updatedFields.username.toLowerCase().trim() : student.username;
+      const p = updatedFields.password ? updatedFields.password.trim() : student.password;
+      if (u !== student.username || p !== student.password) {
+        if (!student.previousCredentials) student.previousCredentials = [];
+        student.previousCredentials.unshift({
+          username: student.username,
+          password: student.password,
+          changedAt: new Date().toLocaleString("tr-TR")
+        });
+      }
+      student.username = u;
+      student.password = p;
+    }
+
+    if (updatedFields.name) student.name = updatedFields.name.trim();
+    if (updatedFields.field) student.field = updatedFields.field;
+    if (updatedFields.grade) student.grade = updatedFields.grade;
+    if (updatedFields.section) student.section = updatedFields.section.toUpperCase();
+    if (updatedFields.targetUniversity !== undefined) student.targetUniversity = updatedFields.targetUniversity;
+    if (updatedFields.targetDepartment !== undefined) student.targetDepartment = updatedFields.targetDepartment;
+    if (updatedFields.targetTytNet !== undefined) student.targetTytNet = Number(updatedFields.targetTytNet) || 0;
+    if (updatedFields.targetAytNet !== undefined) student.targetAytNet = Number(updatedFields.targetAytNet) || 0;
+    if (updatedFields.targetWeeklyQuestions !== undefined) student.targetWeeklyQuestions = Number(updatedFields.targetWeeklyQuestions) || 1400;
+
+    this.saveToStorage();
+    return { success: true, student };
+  }
+
+  updateStudentCredentials(studentId, newUsername, newPassword, newGrade = null, newSection = null) {
     if (this.authRole === "student") return { success: false, message: "Öğrenciler kullanıcı adı/şifre değiştiremez." };
     const student = (this.data.students || []).find(s => s.id === studentId);
     if (!student) return { success: false, message: "Öğrenci bulunamadı." };
 
-    if (!student.previousCredentials) student.previousCredentials = [];
-    student.previousCredentials.unshift({
-      username: student.username,
-      password: student.password,
-      changedAt: new Date().toLocaleString("tr-TR")
-    });
+    const u = newUsername.toLowerCase().trim();
+    const p = newPassword.trim();
 
-    student.username = newUsername.toLowerCase().trim();
-    student.password = newPassword.trim();
+    if (u !== student.username || p !== student.password) {
+      if (!student.previousCredentials) student.previousCredentials = [];
+      student.previousCredentials.unshift({
+        username: student.username,
+        password: student.password,
+        changedAt: new Date().toLocaleString("tr-TR")
+      });
+    }
+
+    student.username = u;
+    student.password = p;
+    if (newGrade) student.grade = newGrade;
+    if (newSection) student.section = newSection.toUpperCase();
+
     this.saveToStorage();
     return { success: true, student };
   }
