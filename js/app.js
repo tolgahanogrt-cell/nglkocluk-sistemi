@@ -197,6 +197,15 @@ class App {
       this.refreshAll();
     });
 
+    // 5b. Grafik Ders Filtre Dinleyicileri
+    document.getElementById("tytChartSubjectFilter")?.addEventListener("change", (e) => {
+      ChartManager.filterTytDatasets(e.target.value);
+    });
+
+    document.getElementById("aytChartSubjectFilter")?.addEventListener("change", (e) => {
+      ChartManager.filterAytDatasets(e.target.value);
+    });
+
     // 6. Hızlı Butonlar
     document.getElementById("btnQuickAddStudent")?.addEventListener("click", () => this.openModal("modalStudent"));
     document.getElementById("btnQuickAddExam")?.addEventListener("click", () => this.openModal("modalExam"));
