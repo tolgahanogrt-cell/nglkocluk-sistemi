@@ -52,9 +52,107 @@ class AnalyticsEngine {
     return Math.min(500, Number(score.toFixed(1)));
   }
 
+  // Tarih Formatı Dönüştürücü: gg.aa.yyyy (Türkçe Standart)
+  static formatDateTurkish(dateStr) {
+    if (!dateStr) return "-";
+    try {
+      const clean = String(dateStr).split("T")[0].trim();
+      const parts = clean.split("-");
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+      }
+      const dotParts = clean.split(".");
+      if (dotParts.length === 3 && dotParts[2].length === 4) {
+        return clean;
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return `${dd}.${mm}.${yyyy}`;
+      }
+    } catch (e) {}
+    return String(dateStr);
+  }
+
   // Öğrencinin genel istatistikleri
   static getStudentStats(student) {
     if (!student) return null;
+
+    if (student.isAggregate) {
+      const filtered = window.store.getFilteredStudents(window.store.filterGrade, window.store.filterSection);
+      let totalLastTyt = 0, countTyt = 0, maxTyt = 0;
+      let totalLastAyt = 0, countAyt = 0, maxAyt = 0;
+
+      filtered.forEach(s => {
+        const sTyt = (s.exams || []).filter(e => e.type === "TYT");
+        if (sTyt.length > 0) {
+          const lastNet = sTyt[sTyt.length - 1].totalNet;
+          totalLastTyt += lastNet;
+          countTyt++;
+          const sMax = Math.max(...sTyt.map(e => e.totalNet));
+          if (sMax > maxTyt) maxTyt = sMax;
+        }
+        const sAyt = (s.exams || []).filter(e => e.type === "AYT");
+        if (sAyt.length > 0) {
+          const lastNet = sAyt[sAyt.length - 1].totalNet;
+          totalLastAyt += lastNet;
+          countAyt++;
+          const sMax = Math.max(...sAyt.map(e => e.totalNet));
+          if (sMax > maxAyt) maxAyt = sMax;
+        }
+      });
+
+      const avgLastTyt = countTyt > 0 ? Number((totalLastTyt / countTyt).toFixed(2)) : 0;
+      const avgLastAyt = countAyt > 0 ? Number((totalLastAyt / countAyt).toFixed(2)) : 0;
+
+      const logs = student.questionLogs || [];
+      const totalQuestions = logs.reduce((sum, l) => sum + (Number(l.count) || 0), 0);
+      const totalCorrect = logs.reduce((sum, l) => sum + (Number(l.correct) || 0), 0);
+      const accuracyRate = totalQuestions > 0 ? Number(((totalCorrect / totalQuestions) * 100).toFixed(1)) : 0;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const last7DaysLogs = logs.filter(l => new Date(l.date) >= sevenDaysAgo);
+      const weeklyQuestions = last7DaysLogs.reduce((sum, l) => sum + (Number(l.count) || 0), 0);
+      const targetWeeklyQuestions = student.targetWeeklyQuestions || (filtered.length * 1200);
+      const weeklyProgressPct = targetWeeklyQuestions > 0 
+        ? Math.min(100, Math.round((weeklyQuestions / targetWeeklyQuestions) * 100))
+        : 0;
+
+      const courseAttendance = student.courseAttendance || [];
+      const totalAbsentHours = courseAttendance.reduce((sum, a) => sum + (Number(a.hours) || 0), 0);
+      const totalAbsentDays = courseAttendance.length;
+
+      const sessions = student.coachingSessions || [];
+      const attendedSessions = sessions.filter(s => s.status === "Katıldı").length;
+      const sessionRate = sessions.length > 0 ? Math.round((attendedSessions / sessions.length) * 100) : 100;
+
+      return {
+        isAggregate: true,
+        studentCount: filtered.length,
+        tytCount: (student.exams || []).filter(e => e.type === "TYT").length,
+        aytCount: (student.exams || []).filter(e => e.type === "AYT").length,
+        lastTyt: avgLastTyt,
+        maxTyt: maxTyt,
+        avgTyt: avgLastTyt,
+        tytTargetDiff: Number((avgLastTyt - student.targetTytNet).toFixed(2)),
+        lastAyt: avgLastAyt,
+        maxAyt: maxAyt,
+        avgAyt: avgLastAyt,
+        aytTargetDiff: Number((avgLastAyt - student.targetAytNet).toFixed(2)),
+        totalQuestions,
+        weeklyQuestions,
+        weeklyProgressPct,
+        accuracyRate,
+        totalAbsentDays,
+        totalAbsentHours,
+        sessionRate,
+        sessionsTotal: sessions.length,
+        attendedSessions
+      };
+    }
 
     const tytExams = (student.exams || []).filter(e => e.type === "TYT");
     const aytExams = (student.exams || []).filter(e => e.type === "AYT");
@@ -97,6 +195,7 @@ class AnalyticsEngine {
     const sessionRate = sessions.length > 0 ? Math.round((attendedSessions / sessions.length) * 100) : 100;
 
     return {
+      isAggregate: false,
       tytCount: tytExams.length,
       aytCount: aytExams.length,
       lastTyt,
@@ -121,7 +220,40 @@ class AnalyticsEngine {
 
   // Tamamen Dinamik İlerleme ve Gerileme Analiz Motoru
   static analyzeProgress(student) {
-    if (!student || !student.exams || student.exams.length === 0) {
+    if (!student) {
+      return {
+        status: "Henüz Veri Yetersiz",
+        statusType: "neutral",
+        trendTyt: "stabil",
+        trendAyt: "stabil",
+        deltaTyt: 0,
+        deltaAyt: 0,
+        strengths: [],
+        weaknesses: [],
+        recommendations: ["Öğrencinin analizinin çıkarılması için en az 1 deneme sınavı giriniz."]
+      };
+    }
+
+    if (student.isAggregate) {
+      const stats = this.getStudentStats(student);
+      return {
+        status: `Toplu Sınıf Başarı Özeti (${stats.studentCount} Öğrenci)`,
+        statusType: "success",
+        trendTyt: "stabil",
+        trendAyt: "stabil",
+        deltaTyt: 0,
+        deltaAyt: 0,
+        strengths: [{ subject: "Sınıf TYT Ortalaması", net: stats.lastTyt, rate: Math.min(100, Math.round((stats.lastTyt / 120) * 100)) }],
+        weaknesses: [],
+        recommendations: [
+          `Sınıf genelinde ${stats.studentCount} kayıtlı öğrenci bulunmaktadır. Ortalama TYT: ${stats.lastTyt} Net, AYT: ${stats.lastAyt} Net.`,
+          `Son 7 günde toplam ${stats.weeklyQuestions} soru çözüldü (Genel Doğruluk: %${stats.accuracyRate}).`,
+          "Şube bazlı kazanım pekiştirme etütleri ve branş denemeleri ile başarı ivmesi korunmalıdır."
+        ]
+      };
+    }
+
+    if (!student.exams || student.exams.length === 0) {
       return {
         status: "Henüz Veri Yetersiz",
         statusType: "neutral",
