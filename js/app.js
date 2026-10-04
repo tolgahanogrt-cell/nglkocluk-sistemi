@@ -27,43 +27,82 @@ class App {
 
   applyRoleRestrictions() {
     const role = window.store.getRole();
-    const user = window.store.getCurrentUser();
 
     document.body.classList.remove("role-admin", "role-teacher", "role-student");
     document.body.classList.add(`role-${role}`);
 
-    // Yan Menü Kullanıcı Bilgisi
-    const userNameEl = document.getElementById("sidebarUserName");
-    const roleBadgeEl = document.getElementById("sidebarRoleBadge");
+    this.updateSidebarUserInfo();
 
     if (role === "admin") {
-      if (userNameEl) userNameEl.textContent = user?.name || "Sistem Yöneticisi";
-      if (roleBadgeEl) {
-        roleBadgeEl.className = "badge badge-primary";
-        roleBadgeEl.textContent = "⚙️ Sistem Yöneticisi";
-      }
       if (this.currentTab !== "admin") {
         this.switchTab("admin");
       }
     } else if (role === "teacher") {
-      if (userNameEl) userNameEl.textContent = user?.name || "Öğretmen";
-      if (roleBadgeEl) {
-        roleBadgeEl.className = "badge badge-success";
-        roleBadgeEl.textContent = "👨‍🏫 Öğretmen / Koç";
-      }
       // Öğretmen admin sekmesinde ASLA kalamaz!
       if (this.currentTab === "admin") {
         this.switchTab("dashboard");
       }
     } else if (role === "student") {
-      if (userNameEl) userNameEl.textContent = user?.name || "Öğrenci";
-      if (roleBadgeEl) {
-        roleBadgeEl.className = "badge badge-info";
-        roleBadgeEl.textContent = "🎓 Öğrenci Portalı";
-      }
       // Öğrenci doğrudan dashboard'a gelsin
       if (this.currentTab === "admin" || this.currentTab === "students") {
         this.switchTab("dashboard");
+      }
+    }
+  }
+
+  // Sol alttaki kullanıcı bilgisini tüm sayfalarda ve rollerde güncelleyen metod
+  updateSidebarUserInfo() {
+    const role = window.store.getRole();
+    const user = window.store.getCurrentUser();
+    const userNameEl = document.getElementById("sidebarUserName");
+    const roleBadgeEl = document.getElementById("sidebarRoleBadge");
+    const avatarEl = document.getElementById("sidebarUserAvatar");
+    const titleEl = document.getElementById("sidebarUserTitle");
+
+    if (!role || !user) {
+      if (userNameEl) userNameEl.textContent = "Misafir Kullanıcı";
+      if (roleBadgeEl) {
+        roleBadgeEl.className = "badge badge-outline";
+        roleBadgeEl.textContent = "Giriş Yapılmadı";
+      }
+      return;
+    }
+
+    if (role === "admin") {
+      if (titleEl) titleEl.textContent = "Yönetici Hesabı";
+      if (userNameEl) userNameEl.textContent = user.name || "Sistem Yöneticisi";
+      if (avatarEl) {
+        avatarEl.style.background = "var(--primary)";
+        avatarEl.textContent = "SY";
+      }
+      if (roleBadgeEl) {
+        roleBadgeEl.className = "badge badge-primary";
+        roleBadgeEl.textContent = "⚙️ Sistem Yöneticisi";
+      }
+    } else if (role === "teacher") {
+      if (titleEl) titleEl.textContent = "Öğretmen / Koç";
+      if (userNameEl) userNameEl.textContent = user.name || "Öğretmen";
+      if (avatarEl) {
+        avatarEl.style.background = "var(--secondary)";
+        const initials = (user.name || "Öğretmen").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+        avatarEl.textContent = initials || "ÖĞ";
+      }
+      if (roleBadgeEl) {
+        roleBadgeEl.className = "badge badge-success";
+        roleBadgeEl.textContent = user.branch ? `👨‍🏫 ${user.branch}` : "👨‍🏫 Öğretmen / Koç";
+      }
+    } else if (role === "student") {
+      const student = window.store.getActiveStudent() || user;
+      if (titleEl) titleEl.textContent = "Giriş Yapan Öğrenci";
+      if (userNameEl) userNameEl.textContent = student.name || user.name || "Öğrenci";
+      if (avatarEl) {
+        avatarEl.style.background = student.avatarColor || "var(--primary)";
+        const initials = (student.name || user.name || "Öğrenci").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+        avatarEl.textContent = initials || "ÖĞ";
+      }
+      if (roleBadgeEl) {
+        roleBadgeEl.className = "badge badge-info";
+        roleBadgeEl.textContent = student.field ? `🎓 ${student.field}` : "🎓 Öğrenci Portalı";
       }
     }
   }
@@ -257,10 +296,13 @@ class App {
     } else if (tabId === "karne") {
       this.renderKarne();
     }
+
+    this.updateSidebarUserInfo();
   }
 
   // --- Genel Yenileme ---
   refreshAll() {
+    this.updateSidebarUserInfo();
     const role = window.store.getRole();
     if (role === "admin") {
       this.renderTeachersTable();
