@@ -135,6 +135,24 @@ class AppStore {
     this.saveToStorage();
   }
 
+  updateTeacherCredentials(teacherId, newUsername, newPassword) {
+    if (this.authRole !== "admin") return { success: false, message: "Yalnızca yönetici güncelleyebilir." };
+    const teacher = (this.data.teachers || []).find(t => t.id === teacherId);
+    if (!teacher) return { success: false, message: "Öğretmen bulunamadı." };
+
+    if (!teacher.previousCredentials) teacher.previousCredentials = [];
+    teacher.previousCredentials.unshift({
+      username: teacher.username,
+      password: teacher.password,
+      changedAt: new Date().toLocaleString("tr-TR")
+    });
+
+    teacher.username = newUsername.toLowerCase().trim();
+    teacher.password = newPassword.trim();
+    this.saveToStorage();
+    return { success: true, teacher };
+  }
+
   // --- Öğrenci İşlemleri (Öğretmen ve Yönetici) ---
   getStudents() {
     const all = this.data.students || [];
@@ -215,6 +233,24 @@ class AppStore {
     const remaining = this.getStudents();
     this.activeStudentId = remaining[0] ? remaining[0].id : null;
     this.saveToStorage();
+  }
+
+  updateStudentCredentials(studentId, newUsername, newPassword) {
+    if (this.authRole === "student") return { success: false, message: "Öğrenciler kullanıcı adı/şifre değiştiremez." };
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    if (!student) return { success: false, message: "Öğrenci bulunamadı." };
+
+    if (!student.previousCredentials) student.previousCredentials = [];
+    student.previousCredentials.unshift({
+      username: student.username,
+      password: student.password,
+      changedAt: new Date().toLocaleString("tr-TR")
+    });
+
+    student.username = newUsername.toLowerCase().trim();
+    student.password = newPassword.trim();
+    this.saveToStorage();
+    return { success: true, student };
   }
 
   // --- Deneme Sınavları (Öğretmen ve Yönetici) ---
