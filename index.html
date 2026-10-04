@@ -618,8 +618,33 @@
       <!-- ================= SEKME 2: DENEME SINAVLARI ================= -->
       <section id="page-exams" class="page-container">
         <div class="card">
-          <div class="card-header">
-            <h3>Kayıtlı Deneme Sınavları</h3>
+          <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+              <h3 style="margin:0;">Kayıtlı Deneme Sınavları</h3>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="examFilterPeriod" style="font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  Dönem:
+                </label>
+                <select id="examFilterPeriod" class="form-select" style="font-size:13px; font-weight:600; padding:6px 12px; border-radius:var(--radius-sm); min-width:170px;">
+                  <option value="all">Tümü (Tüm Dönem)</option>
+                  <optgroup label="Aylara Göre">
+                    <option value="m1">Ocak Ayı</option>
+                    <option value="m2">Şubat Ayı</option>
+                    <option value="m3">Mart Ayı</option>
+                    <option value="m4">Nisan Ayı</option>
+                    <option value="m5">Mayıs Ayı</option>
+                    <option value="m6">Haziran Ayı</option>
+                    <option value="m7">Temmuz Ayı</option>
+                    <option value="m8">Ağustos Ayı</option>
+                    <option value="m9">Eylül Ayı</option>
+                    <option value="m10">Ekim Ayı</option>
+                    <option value="m11">Kasım Ayı</option>
+                    <option value="m12">Aralık Ayı</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
             <button class="btn btn-primary btn-sm teacher-and-admin-only" id="btnOpenNewExamModal">+ Yeni Deneme Sınavı Ekle</button>
           </div>
           <div class="card-body" style="padding: 0;">
