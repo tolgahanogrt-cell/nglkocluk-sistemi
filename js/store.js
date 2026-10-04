@@ -520,7 +520,10 @@ class AppStore {
   }
 
   deleteQuestionLog(studentId, logId) {
-    if (this.authRole === "student") return;
+    if (this.authRole === "student") {
+      const current = this.getActiveStudent();
+      if (!current || current.id !== studentId) return;
+    }
     const student = this.data.students.find(s => s.id === studentId);
     if (!student) return;
     student.questionLogs = student.questionLogs.filter(l => l.id !== logId);
@@ -575,6 +578,22 @@ class AppStore {
     if (!student) return;
     student.coachingSessions = (student.coachingSessions || []).filter(s => s.id !== sessionId);
     this.saveToStorage();
+  }
+
+  // Öğretmen/Yönetici ve Soru için Öğrenci: mevcut bir kaydı günceller
+  updateRecord(studentId, collection, recordId, newData) {
+    if (this.authRole === "student") {
+      if (collection !== "questionLogs") return null;
+      const current = this.getActiveStudent();
+      if (!current || current.id !== studentId) return null;
+    }
+    const student = this.data.students.find(s => s.id === studentId);
+    if (!student || !Array.isArray(student[collection])) return null;
+    const idx = student[collection].findIndex(r => r.id === recordId);
+    if (idx === -1) return null;
+    student[collection][idx] = { ...newData, id: recordId };
+    this.saveToStorage();
+    return student[collection][idx];
   }
 }
 
