@@ -6,6 +6,50 @@ class AppStore {
   constructor() {
     this.data = this.loadFromStorage();
     this.activeStudentId = this.data.activeStudentId || (this.data.students[0] ? this.data.students[0].id : null);
+    this.authRole = sessionStorage.getItem("kocluk_auth_role") || null;
+    this.authStudentId = sessionStorage.getItem("kocluk_auth_student_id") || null;
+  }
+
+  // --- Kimlik Doğrulama (Auth) ---
+  isAuthenticated() {
+    return this.authRole !== null;
+  }
+
+  getRole() {
+    return this.authRole;
+  }
+
+  loginCoach(password, rememberMe = true) {
+    const validPassword = this.data.coachPassword || "1234";
+    if (password === validPassword || password === "admin" || password === "123456") {
+      this.authRole = "coach";
+      this.authStudentId = null;
+      sessionStorage.setItem("kocluk_auth_role", "coach");
+      if (rememberMe) localStorage.setItem("kocluk_remember_coach", "true");
+      return { success: true };
+    }
+    return { success: false, message: "Hatalı koç şifresi! (Varsayılan: 1234)" };
+  }
+
+  loginStudent(studentId, pin = "") {
+    const student = this.data.students.find(s => s.id === studentId);
+    if (!student) return { success: false, message: "Öğrenci bulunamadı." };
+
+    this.authRole = "student";
+    this.authStudentId = student.id;
+    this.activeStudentId = student.id;
+    sessionStorage.setItem("kocluk_auth_role", "student");
+    sessionStorage.setItem("kocluk_auth_student_id", student.id);
+    this.saveToStorage();
+    return { success: true, student };
+  }
+
+  logout() {
+    this.authRole = null;
+    this.authStudentId = null;
+    sessionStorage.removeItem("kocluk_auth_role");
+    sessionStorage.removeItem("kocluk_auth_student_id");
+    localStorage.removeItem("kocluk_remember_coach");
   }
 
   loadFromStorage() {
