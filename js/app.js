@@ -337,7 +337,14 @@ class App {
   renderAdminProfile() {
     const a = window.store.getAdminProfile();
     document.getElementById("profileName").value = a.name || "";
-    document.getElementById("profileTitle").value = a.title || "";
+    const titleSelect = document.getElementById("profileTitle");
+    if (titleSelect) {
+      if (a.title === "Müdür" || a.title === "Müdür Yardımcısı") {
+        titleSelect.value = a.title;
+      } else {
+        titleSelect.value = "Müdür Yardımcısı";
+      }
+    }
     document.getElementById("profileUsername").value = a.username || "";
     document.getElementById("profilePassword").value = a.password || "";
   }
@@ -923,7 +930,8 @@ class App {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    const isCoach = window.store.getRole() !== "student";
+    const role = window.store.getRole();
+    const canManage = role === "admin" || role === "teacher";
     // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
     const exams = (student.exams || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (exams.length === 0) {
@@ -947,8 +955,12 @@ class App {
         subjectSummary = parts.join(" | ");
       }
 
-      const actionHtml = isCoach 
-        ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteExam('${ex.id}')">Sil</button></td>`
+      const targetStudentId = ex.studentId || (student && student.id !== "ALL" ? student.id : "");
+      const actionHtml = canManage 
+        ? `<td class="teacher-and-admin-only" style="white-space:nowrap; text-align:center;">
+             <button class="btn btn-secondary btn-sm" style="padding:3px 8px; margin-right:4px;" onclick="app.editExam('${ex.id}','${targetStudentId}')">✏️ Güncelle</button>
+             <button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="app.deleteExam('${ex.id}','${targetStudentId}')">🗑️ Sil</button>
+           </td>`
         : "";
 
       const studentBadge = student.isAggregate && ex.studentName
@@ -976,12 +988,15 @@ class App {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    const isCoach = window.store.getRole() !== "student";
     const stats = AnalyticsEngine.getStudentStats(student);
-    document.getElementById("qTargetCount").textContent = `${student.targetWeeklyQuestions} Soru`;
-    document.getElementById("qSolvedCount").textContent = `${stats.weeklyQuestions} soru çözüldü`;
-    document.getElementById("qAccuracyRate").textContent = `%${stats.accuracyRate} Doğruluk Oranı`;
-    document.getElementById("qTargetProgressFill").style.width = `${stats.weeklyProgressPct}%`;
+    const targetCountEl = document.getElementById("qTargetCount");
+    if (targetCountEl) targetCountEl.textContent = `${student.targetWeeklyQuestions || 1200} Soru`;
+    const solvedEl = document.getElementById("qSolvedCount");
+    if (solvedEl) solvedEl.textContent = `${stats.weeklyQuestions} soru çözüldü`;
+    const accEl = document.getElementById("qAccuracyRate");
+    if (accEl) accEl.textContent = `%${stats.accuracyRate} Doğruluk Oranı`;
+    const progEl = document.getElementById("qTargetProgressFill");
+    if (progEl) progEl.style.width = `${stats.weeklyProgressPct}%`;
 
     // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
     const logs = (student.questionLogs || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -994,9 +1009,13 @@ class App {
       const correct = Number(l.correct) || 0;
       const total = Number(l.count) || 0;
       const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
-      const actionHtml = isCoach 
-        ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteQuestionLog('${l.id}')">Sil</button></td>`
-        : "";
+      const targetStudentId = l.studentId || (student && student.id !== "ALL" ? student.id : "");
+      
+      const actionHtml = `
+        <td style="white-space:nowrap; text-align:center;">
+          <button class="btn btn-secondary btn-sm" style="padding:3px 8px; margin-right:4px;" onclick="app.editQuestionLog('${l.id}','${targetStudentId}')">✏️ Güncelle</button>
+          <button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="app.deleteQuestionLog('${l.id}','${targetStudentId}')">🗑️ Sil</button>
+        </td>`;
 
       const studentBadge = student.isAggregate && l.studentName
         ? `<span class="badge badge-outline" style="font-size:10px; margin-left:4px;">${l.studentName}</span>`
@@ -1023,7 +1042,8 @@ class App {
     if (!tbody) return;
     tbody.innerHTML = "";
 
-    const isCoach = window.store.getRole() !== "student";
+    const role = window.store.getRole();
+    const canManage = role === "admin" || role === "teacher";
     // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
     const list = (student.courseAttendance || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (list.length === 0) {
@@ -1036,8 +1056,12 @@ class App {
       if (a.type.includes("Özürlü")) bClass = "badge-warning";
       else if (a.type.includes("İzinli")) bClass = "badge-info";
 
-      const actionHtml = isCoach
-        ? `<td class="teacher-only"><button class="btn btn-danger btn-sm" onclick="app.deleteCourseAttendance('${a.id}')">Sil</button></td>`
+      const targetStudentId = a.studentId || (student && student.id !== "ALL" ? student.id : "");
+      const actionHtml = canManage
+        ? `<td class="teacher-and-admin-only" style="white-space:nowrap; text-align:center;">
+             <button class="btn btn-secondary btn-sm" style="padding:3px 8px; margin-right:4px;" onclick="app.editCourseAttendance('${a.id}','${targetStudentId}')">✏️ Güncelle</button>
+             <button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="app.deleteCourseAttendance('${a.id}','${targetStudentId}')">🗑️ Sil</button>
+           </td>`
         : "";
 
       const studentBadge = student.isAggregate && a.studentName
@@ -1062,7 +1086,8 @@ class App {
     if (!container) return;
     container.innerHTML = "";
 
-    const isCoach = window.store.getRole() !== "student";
+    const role = window.store.getRole();
+    const canManage = role === "admin" || role === "teacher";
     // Tarihe göre yeniden eskiye (en yeni en üstte) sırala
     const sessions = (student.coachingSessions || []).slice().sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     if (sessions.length === 0) {
@@ -1078,17 +1103,23 @@ class App {
       const studentBadge = student.isAggregate && s.studentName
         ? `<span class="badge badge-outline" style="font-size:11px; margin-left:6px;">${s.studentName}</span>`
         : "";
+      const targetStudentId = s.studentId || (student && student.id !== "ALL" ? student.id : "");
+
+      const actionsHtml = canManage
+        ? `<button class="btn btn-secondary btn-sm" style="margin-left:8px; padding:2px 8px;" onclick="app.editCoachingSession('${s.id}','${targetStudentId}')">✏️ Güncelle</button>
+           <button class="btn btn-danger btn-sm" style="margin-left:6px; padding:2px 8px;" onclick="app.deleteCoachingSession('${s.id}','${targetStudentId}')">🗑️ Sil</button>`
+        : "";
 
       card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
           <div>
             <strong style="font-size:14px;">${s.title}</strong> ${studentBadge}
             <span style="font-size:12px; color:var(--text-muted); margin-left:8px;">(${AnalyticsEngine.formatDateTurkish(s.date)})</span>
           </div>
-          <div>
+          <div style="display:flex; align-items:center;">
             <span class="badge ${s.status === 'Katıldı' ? 'badge-success' : 'badge-danger'}">${s.status}</span>
             <span class="badge badge-outline" style="margin-left:6px;">Motivasyon: ${s.studentMotivation}/10</span>
-            ${isCoach ? `<button class="btn btn-danger btn-sm teacher-only" style="margin-left:8px; padding:2px 8px;" onclick="app.deleteCoachingSession('${s.id}')">Sil</button>` : ''}
+            ${actionsHtml}
           </div>
         </div>
         <p style="font-size:13px; color:var(--text-main); margin-bottom:8px;">${s.summary}</p>
@@ -1295,13 +1326,24 @@ class App {
   }
 
   // --- Modal Yönetimi ---
-  openModal(modalId) {
+  openModal(modalId, isEdit = false) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
+
+    if (!isEdit) {
+      // Yeni kayıt modu: önceki düzenleme durumunu ve form değerlerini temizle
+      this.editing = null;
+      this.modalStudentOverride = null;
+      const formMap = { modalExam: "formExam", modalQuestion: "formQuestion", modalBulkCourseAttendance: "formBulkAttendance", modalSession: "formSession" };
+      if (formMap[modalId]) document.getElementById(formMap[modalId])?.reset();
+      this.setModalMode(modalId, false);
+    }
     modal.classList.add("active");
 
     const today = new Date().toISOString().split("T")[0];
-    if (modalId === "modalExam") {
+    if (isEdit) {
+      // düzenleme: tarih alanlarını çağıran metod doldurur
+    } else if (modalId === "modalExam") {
       document.getElementById("examDate").value = today;
       this.handleExamTypeChange(document.getElementById("examTypeSelect").value);
     } else if (modalId === "modalQuestion") {
@@ -1317,6 +1359,112 @@ class App {
   closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.remove("active");
+    this.editing = null;
+    this.modalStudentOverride = null;
+    this.setModalMode(modalId, false);
+  }
+
+  // Modal başlık ve kaydet butonunu ekleme / güncelleme moduna göre ayarlar
+  setModalMode(modalId, isEdit) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    const saveIds = { modalExam: "btnSaveExam", modalQuestion: "btnSaveQuestion", modalBulkCourseAttendance: "btnSaveBulkAttendance", modalSession: "btnSaveSession" };
+    const titleEl = modal.querySelector(".modal-header h3");
+    const btn = document.getElementById(saveIds[modalId]);
+    if (titleEl) {
+      if (!titleEl.dataset.orig) titleEl.dataset.orig = titleEl.textContent;
+      titleEl.textContent = isEdit ? "Kaydı Güncelle" : titleEl.dataset.orig;
+    }
+    if (btn) {
+      if (!btn.dataset.orig) btn.dataset.orig = btn.textContent;
+      btn.textContent = isEdit ? "Güncelle" : btn.dataset.orig;
+    }
+  }
+
+  // Düzenlenen kaydın ait olduğu öğrenci (yoksa aktif öğrenci)
+  getModalStudent() {
+    return this.modalStudentOverride || window.store.getActiveStudent();
+  }
+
+  findRecord(collection, id, sid) {
+    const s = (window.store.data.students || []).find(x => x.id === sid);
+    const rec = s && (s[collection] || []).find(r => r.id === id);
+    return rec ? { student: s, record: rec } : null;
+  }
+
+  setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v === undefined || v === null ? "" : v;
+  }
+
+  // --- Güncelleme (Öğretmen / Yönetici / Öğrenci) ---
+  editExam(id, sid) {
+    const found = this.findRecord("exams", id, sid);
+    if (!found) return;
+    const ex = found.record;
+    this.editing = { kind: "exam", id, sid: found.student.id };
+    this.modalStudentOverride = found.student;
+    this.openModal("modalExam", true);
+    this.setModalMode("modalExam", true);
+    this.setVal("examName", ex.name);
+    this.setVal("examDate", ex.date);
+    this.setVal("examTypeSelect", ex.type);
+    this.setVal("examDifficulty", ex.difficulty || 3);
+    this.setVal("examNotes", ex.notes || "");
+    this.handleExamTypeChange(ex.type);
+    const fill = (prefix, obj) => {
+      this.setVal(prefix + "D", obj ? obj.d : "");
+      this.setVal(prefix + "Y", obj ? obj.y : "");
+    };
+    if (ex.type === "TYT" && ex.tyt) {
+      fill("tytTurkce", ex.tyt.turkce); fill("tytMat", ex.tyt.matematik);
+      fill("tytSos", ex.tyt.sosyal); fill("tytFen", ex.tyt.fen);
+    } else if (ex.ayt) {
+      fill("aytMat", ex.ayt.matematik); fill("aytFiz", ex.ayt.fizik);
+      fill("aytKim", ex.ayt.kimya); fill("aytBiy", ex.ayt.biyoloji);
+      fill("aytEdb", ex.ayt.edebiyat); fill("aytTar1", ex.ayt.tarih1);
+      fill("aytCog1", ex.ayt.cografya1);
+    }
+    this.calculateExamLiveNets();
+  }
+
+  editQuestionLog(id, sid) {
+    const found = this.findRecord("questionLogs", id, sid);
+    if (!found) return;
+    const l = found.record;
+    this.editing = { kind: "question", id, sid: found.student.id };
+    this.modalStudentOverride = found.student;
+    this.openModal("modalQuestion", true);
+    this.setModalMode("modalQuestion", true);
+    this.setVal("qDate", l.date); this.setVal("qSubject", l.subject);
+    this.setVal("qCount", l.count); this.setVal("qCorrect", l.correct);
+    this.setVal("qWrong", l.wrong); this.setVal("qDuration", l.duration);
+  }
+
+  editCourseAttendance(id, sid) {
+    const found = this.findRecord("courseAttendance", id, sid);
+    if (!found) return;
+    const a = found.record;
+    this.editing = { kind: "attendance", id, sid: found.student.id };
+    this.modalStudentOverride = found.student;
+    this.openModal("modalBulkCourseAttendance", true);
+    this.setModalMode("modalBulkCourseAttendance", true);
+    this.setVal("bulkStartDate", a.date); this.setVal("bulkEndDate", a.date);
+    this.setVal("bulkType", a.type); this.setVal("bulkHours", a.hours);
+    this.setVal("bulkReason", a.reason || "");
+  }
+
+  editCoachingSession(id, sid) {
+    const found = this.findRecord("coachingSessions", id, sid);
+    if (!found) return;
+    const s = found.record;
+    this.editing = { kind: "session", id, sid: found.student.id };
+    this.modalStudentOverride = found.student;
+    this.openModal("modalSession", true);
+    this.setModalMode("modalSession", true);
+    this.setVal("csDate", s.date); this.setVal("csTitle", s.title);
+    this.setVal("csStatus", s.status); this.setVal("csMotivation", s.studentMotivation);
+    this.setVal("csSummary", s.summary); this.setVal("csAssignments", (s.assignments || []).join("\n"));
   }
 
   handleExamTypeChange(type) {
@@ -1325,7 +1473,7 @@ class App {
     const aytSayisal = document.getElementById("aytSayisalFields");
     const aytEa = document.getElementById("aytEaFields");
 
-    const student = window.store.getActiveStudent();
+    const student = this.getModalStudent();
     const field = student ? student.field : "Sayısal";
 
     if (type === "TYT") {
@@ -1378,7 +1526,7 @@ class App {
       document.getElementById("aytMatNet").value = matNet + " Net";
       totalNet += matNet;
 
-      const student = window.store.getActiveStudent();
+      const student = this.getModalStudent();
       const field = student ? student.field : "Sayısal";
 
       if (field === "Sayısal") {
@@ -1478,8 +1626,11 @@ class App {
   }
 
   handleSaveExam() {
-    const student = window.store.getActiveStudent();
-    if (!student) return;
+    const student = this.getModalStudent();
+    if (!student || (!this.editing && student.isAggregate)) {
+      alert("Lütfen önce işlem yapmak istediğiniz öğrenciyi seçiniz (Tüm öğrenciler seçili iken yeni kayıt eklenemez).");
+      return;
+    }
 
     const name = document.getElementById("examName").value.trim();
     const date = document.getElementById("examDate").value;
@@ -1552,16 +1703,21 @@ class App {
       examData.estimatedScore = AnalyticsEngine.estimateAytScore(aytObj, student.field);
     }
 
-    window.store.addExam(student.id, examData);
+    const editing = this.editing && this.editing.kind === "exam" ? this.editing : null;
+    if (editing) window.store.updateRecord(editing.sid, "exams", editing.id, examData);
+    else window.store.addExam(student.id, examData);
     this.closeModal("modalExam");
     document.getElementById("formExam").reset();
     this.refreshAll();
-    this.showToast(`${examData.name} deneme sonucu kaydedildi!`, "success");
+    this.showToast(`${examData.name} deneme sonucu ${editing ? "güncellendi" : "kaydedildi"}!`, "success");
   }
 
   handleSaveQuestion() {
-    const student = window.store.getActiveStudent();
-    if (!student) return;
+    const student = this.getModalStudent();
+    if (!student || (!this.editing && student.isAggregate)) {
+      alert("Lütfen önce işlem yapmak istediğiniz öğrenciyi seçiniz (Tüm öğrenciler seçili iken yeni kayıt eklenemez).");
+      return;
+    }
 
     const count = Number(document.getElementById("qCount").value);
     if (!count || count <= 0) {
@@ -1578,17 +1734,22 @@ class App {
       duration: Number(document.getElementById("qDuration").value) || 0
     };
 
-    window.store.addQuestionLog(student.id, logData);
+    const editing = this.editing && this.editing.kind === "question" ? this.editing : null;
+    if (editing) window.store.updateRecord(editing.sid, "questionLogs", editing.id, logData);
+    else window.store.addQuestionLog(student.id, logData);
     this.closeModal("modalQuestion");
     document.getElementById("formQuestion").reset();
     this.refreshAll();
-    this.showToast(`${logData.subject} dersinden ${logData.count} soru kaydedildi!`, "success");
+    this.showToast(editing ? "Soru kaydı güncellendi!" : `${logData.subject} dersinden ${logData.count} soru kaydedildi!`, "success");
   }
 
   // Takvimden Toplu Devamsızlık Ekleme
   handleSaveBulkAttendance() {
-    const student = window.store.getActiveStudent();
-    if (!student) return;
+    const student = this.getModalStudent();
+    if (!student || (!this.editing && student.isAggregate)) {
+      alert("Lütfen önce işlem yapmak istediğiniz öğrenciyi seçiniz (Tüm öğrenciler seçili iken yeni kayıt eklenemez).");
+      return;
+    }
 
     const startStr = document.getElementById("bulkStartDate").value;
     const endStr = document.getElementById("bulkEndDate").value;
@@ -1603,6 +1764,14 @@ class App {
 
     const start = new Date(startStr);
     const end = new Date(endStr);
+    if (this.editing && this.editing.kind === "attendance") {
+      const ed = this.editing;
+      window.store.updateRecord(ed.sid, "courseAttendance", ed.id, { date: startStr, type, hours, reason });
+      this.closeModal("modalBulkCourseAttendance");
+      this.refreshAll();
+      this.showToast("Devamsızlık kaydı güncellendi!", "success");
+      return;
+    }
     if (start > end) {
       alert("Başlangıç tarihi bitiş tarihinden sonra olamaz.");
       return;
@@ -1642,8 +1811,11 @@ class App {
   }
 
   handleSaveSession() {
-    const student = window.store.getActiveStudent();
-    if (!student) return;
+    const student = this.getModalStudent();
+    if (!student || (!this.editing && student.isAggregate)) {
+      alert("Lütfen önce işlem yapmak istediğiniz öğrenciyi seçiniz (Tüm öğrenciler seçili iken yeni kayıt eklenemez).");
+      return;
+    }
 
     const date = document.getElementById("csDate").value;
     const title = document.getElementById("csTitle").value.trim() || "Haftalık Koçluk Görüşmesi";
@@ -1662,11 +1834,13 @@ class App {
       assignments
     };
 
-    window.store.addCoachingSession(student.id, sessionData);
+    const editing = this.editing && this.editing.kind === "session" ? this.editing : null;
+    if (editing) window.store.updateRecord(editing.sid, "coachingSessions", editing.id, sessionData);
+    else window.store.addCoachingSession(student.id, sessionData);
     this.closeModal("modalSession");
     document.getElementById("formSession").reset();
     this.refreshAll();
-    this.showToast("Koçluk seansı kaydedildi!", "success");
+    this.showToast(editing ? "Koçluk seansı güncellendi!" : "Koçluk seansı kaydedildi!", "success");
   }
 
   // --- Silme İşlemleri ---
@@ -1678,37 +1852,33 @@ class App {
     }
   }
 
-  deleteExam(examId) {
+  deleteExam(examId, sid) {
     if (confirm("Bu sınav kaydını silmek istediğinize emin misiniz?")) {
-      const student = window.store.getActiveStudent();
-      window.store.deleteExam(student.id, examId);
+      window.store.deleteExam(sid || window.store.getActiveStudent().id, examId);
       this.refreshAll();
       this.showToast("Sınav kaydı silindi.", "info");
     }
   }
 
-  deleteQuestionLog(logId) {
+  deleteQuestionLog(logId, sid) {
     if (confirm("Bu soru kaydını silmek istediğinize emin misiniz?")) {
-      const student = window.store.getActiveStudent();
-      window.store.deleteQuestionLog(student.id, logId);
+      window.store.deleteQuestionLog(sid || window.store.getActiveStudent().id, logId);
       this.refreshAll();
       this.showToast("Soru kaydı silindi.", "info");
     }
   }
 
-  deleteCourseAttendance(attId) {
+  deleteCourseAttendance(attId, sid) {
     if (confirm("Bu devamsızlık kaydını silmek istediğinize emin misiniz?")) {
-      const student = window.store.getActiveStudent();
-      window.store.deleteCourseAttendance(student.id, attId);
+      window.store.deleteCourseAttendance(sid || window.store.getActiveStudent().id, attId);
       this.refreshAll();
       this.showToast("Devamsızlık kaydı silindi.", "info");
     }
   }
 
-  deleteCoachingSession(sessionId) {
+  deleteCoachingSession(sessionId, sid) {
     if (confirm("Bu koçluk seansını silmek istediğinize emin misiniz?")) {
-      const student = window.store.getActiveStudent();
-      window.store.deleteCoachingSession(student.id, sessionId);
+      window.store.deleteCoachingSession(sid || window.store.getActiveStudent().id, sessionId);
       this.refreshAll();
       this.showToast("Koçluk seansı silindi.", "info");
     }
