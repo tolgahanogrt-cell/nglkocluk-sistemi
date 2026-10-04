@@ -17,6 +17,7 @@ class App {
       this.currentTab = "dashboard";
       const defaultPage = document.getElementById("page-dashboard");
       if (defaultPage) defaultPage.classList.add("active");
+      this.refreshAll();
       return;
     }
 
@@ -951,7 +952,17 @@ class App {
 
   renderCharts() {
     const student = window.store.getActiveStudent();
-    if (!student) return;
+    if (!student) {
+      const dashboardChartIds = [
+        "chartTytDashboard", "chartAytDashboard", "chartQuestionsDashboard",
+        "chartRadarDashboard", "chartAytRadarDashboard", "chartAttendanceDashboard"
+      ];
+      dashboardChartIds.forEach(id => {
+        ChartManager.destroyChart(id);
+        ChartManager.renderEmptyState(id, "Sınıf ve Şube seçilmediği için grafik verisi yok (0)");
+      });
+      return;
+    }
 
     ChartManager.renderTytChart("chartTytDashboard", student.exams, student.targetTytNet);
     ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet, student.field);
@@ -1172,7 +1183,17 @@ class App {
 
   renderAnalysisDetails() {
     const student = window.store.getActiveStudent();
-    if (!student) return;
+    if (!student) {
+      const badgeDetail = document.getElementById("analysisStatusBadgeDetail");
+      if (badgeDetail) badgeDetail.innerHTML = `<span class="badge badge-outline" style="font-size:13px; padding:6px 12px;">Sınıf/Şube Seçiniz</span>`;
+      const sList = document.getElementById("strengthsList");
+      if (sList) sList.innerHTML = `<span style="color:var(--text-muted);">Sınıf ve şube seçilmediği için analiz verisi yok (0).</span>`;
+      const wList = document.getElementById("weaknessesList");
+      if (wList) wList.innerHTML = `<span style="color:var(--text-muted);">Sınıf ve şube seçilmediği için analiz verisi yok (0).</span>`;
+      const tipsList = document.getElementById("coachingTipsList");
+      if (tipsList) tipsList.innerHTML = `<div style="background:var(--bg-main); padding:9px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color); font-size:13px; color:var(--text-muted);">📌 Lütfen yukarıdan Sınıf ve Şube seçiniz.</div>`;
+      return;
+    }
 
     const analysis = AnalyticsEngine.analyzeProgress(student);
 
@@ -1223,7 +1244,30 @@ class App {
 
   renderKarne() {
     const student = window.store.getActiveStudent();
-    if (!student) return;
+    if (!student) {
+      document.getElementById("karneReportDate").textContent = new Date().toLocaleDateString("tr-TR");
+      const nameEl = document.getElementById("karneStudentName");
+      if (nameEl) nameEl.textContent = "Sınıf ve Şube Seçiniz";
+      const signNameEl = document.getElementById("karneSignStudentName");
+      if (signNameEl) signNameEl.textContent = "-";
+      const fieldEl = document.getElementById("karneStudentField");
+      if (fieldEl) fieldEl.textContent = "-";
+      const targetEl = document.getElementById("karneStudentTarget");
+      if (targetEl) targetEl.textContent = "-";
+      const netsEl = document.getElementById("karneStudentTargetNets");
+      if (netsEl) netsEl.textContent = "TYT: 0 | AYT: 0 Net";
+      const tytSum = document.getElementById("karneTytSummary");
+      if (tytSum) tytSum.textContent = "0 / 0 Net";
+      const aytSum = document.getElementById("karneAytSummary");
+      if (aytSum) aytSum.textContent = "0 / 0 Net";
+      const qSum = document.getElementById("karneTotalQuestions");
+      if (qSum) qSum.textContent = "0 Soru (%0 Doğruluk)";
+      const attSum = document.getElementById("karneAttendanceSummary");
+      if (attSum) attSum.textContent = "0 Gün (0 Saat)";
+      const tbody = document.getElementById("karneExamsTableBody");
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Karne oluşturmak için lütfen Sınıf ve Şube seçiniz.</td></tr>`;
+      return;
+    }
 
     const stats = AnalyticsEngine.getStudentStats(student);
     const analysis = AnalyticsEngine.analyzeProgress(student);
@@ -2040,21 +2084,64 @@ class App {
 
   renderEmptyState() {
     const isFilterMissing = !window.store.filterGrade || !window.store.filterSection;
+
+    // 1. Hero Card Sıfırlama
     const heroName = document.getElementById("heroName");
+    const heroField = document.getElementById("heroField");
+    const heroGrade = document.getElementById("heroGrade");
     const heroTarget = document.getElementById("heroTarget");
+    const heroTargetNets = document.getElementById("heroTargetNets");
+    const heroExamCount = document.getElementById("heroExamCount");
+    const heroAvatar = document.getElementById("heroAvatar");
     const heroBadges = document.getElementById("heroBadges");
-    if (heroName) heroName.textContent = isFilterMissing ? "Öğrenci Seçiniz" : "Kayıtlı Öğrenci Yok";
+
+    if (heroName) heroName.textContent = isFilterMissing ? "Sınıf ve Şube Seçiniz" : "Kayıtlı Öğrenci Yok";
+    if (heroField) heroField.textContent = "-";
+    if (heroGrade) heroGrade.textContent = isFilterMissing ? "-" : "-";
     if (heroTarget) heroTarget.textContent = isFilterMissing 
-      ? "Öğrenci verilerini görüntülemek için lütfen yukarıdan veya sol panelden Sınıf ve Şube seçiniz."
+      ? "Öğrenci verilerini ve başarı grafiklerini görüntülemek için lütfen yukarıdan veya sol panelden Sınıf ve Şube seçiniz."
       : "Seçilen sınıf ve şubede kayıtlı öğrenci bulunmuyor.";
+    if (heroTargetNets) heroTargetNets.textContent = "Hedef: TYT 0 Net | AYT 0 Net";
+    if (heroExamCount) heroExamCount.textContent = "0 TYT / 0 AYT";
+    if (heroAvatar) {
+      heroAvatar.style.background = "#94a3b8";
+      heroAvatar.textContent = "👤";
+    }
     if (heroBadges) heroBadges.innerHTML = "";
 
+    // 2. Filtre Sayı Rozeti
     const countBadge = document.getElementById("filterStudentCountBadge");
     if (countBadge) {
       countBadge.textContent = "Sınıf ve Şube Seçiniz";
       countBadge.className = "badge badge-outline";
     }
 
+    // 3. KPI Kartları (0'lama)
+    const kpiLastTyt = document.getElementById("kpiLastTyt");
+    const kpiTytTrend = document.getElementById("kpiTytTrend");
+    const kpiLastAyt = document.getElementById("kpiLastAyt");
+    const kpiAytTrend = document.getElementById("kpiAytTrend");
+    const kpiWeeklyQuestions = document.getElementById("kpiWeeklyQuestions");
+    const kpiWeeklyProgressFill = document.getElementById("kpiWeeklyProgressFill");
+    const kpiWeeklyPct = document.getElementById("kpiWeeklyPct");
+    const kpiAttendanceRate = document.getElementById("kpiAttendanceRate");
+    const kpiAttendanceDetails = document.getElementById("kpiAttendanceDetails");
+    const dashAnalysisBadge = document.getElementById("dashAnalysisBadge");
+    const dashAnalysisMainTip = document.getElementById("dashAnalysisMainTip");
+
+    if (kpiLastTyt) kpiLastTyt.textContent = "0 Net";
+    if (kpiTytTrend) kpiTytTrend.innerHTML = `<span style="color:var(--text-muted);">-</span>`;
+    if (kpiLastAyt) kpiLastAyt.textContent = "0 Net";
+    if (kpiAytTrend) kpiAytTrend.innerHTML = `<span style="color:var(--text-muted);">-</span>`;
+    if (kpiWeeklyQuestions) kpiWeeklyQuestions.textContent = "0 / 0";
+    if (kpiWeeklyProgressFill) kpiWeeklyProgressFill.style.width = "0%";
+    if (kpiWeeklyPct) kpiWeeklyPct.textContent = "%0 Tamamlandı (0 Toplam)";
+    if (kpiAttendanceRate) kpiAttendanceRate.textContent = "0 Kayıt";
+    if (kpiAttendanceDetails) kpiAttendanceDetails.textContent = "Toplam 0 Ders Saati";
+    if (dashAnalysisBadge) dashAnalysisBadge.innerHTML = `<span class="badge badge-outline">Sınıf ve Şube Seçiniz</span>`;
+    if (dashAnalysisMainTip) dashAnalysisMainTip.textContent = "Grafik ve analizlerin görüntülenmesi için lütfen yukarıdan Sınıf ve Şube seçiniz.";
+
+    // 4. Tablolar
     const emptyTr = `<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">${isFilterMissing ? "Öğrenci verilerini görüntülemek için lütfen önce Sınıf ve Şube seçiniz." : "Bu sınıfta kayıtlı öğrenci bulunmuyor."}</td></tr>`;
     const tbExams = document.getElementById("examsTableBody");
     if (tbExams) tbExams.innerHTML = emptyTr;
@@ -2067,7 +2154,17 @@ class App {
 
     ["heroExamCount", "heroQuestionCount", "heroAttendanceCount", "heroSessionCount"].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.textContent = "-";
+      if (el) el.textContent = "0";
+    });
+
+    // 5. Grafikleri 0'lama / Temizleme
+    const allChartIds = [
+      "chartTytDashboard", "chartAytDashboard", "chartQuestionsDashboard",
+      "chartRadarDashboard", "chartAytRadarDashboard", "chartAttendanceDashboard"
+    ];
+    allChartIds.forEach(id => {
+      ChartManager.destroyChart(id);
+      ChartManager.renderEmptyState(id, "Sınıf ve Şube seçilmediği için grafik verisi yok (0)");
     });
   }
 }
