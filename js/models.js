@@ -14,7 +14,7 @@ const INITIAL_DEMO_DATA = {
     {
       id: "tch-1",
       name: "Tolga Öğretmen",
-      branch: "Rehberlik ve Koçluk",
+      branch: "Rehberlik ve Psikolojik Danışmanlık",
       username: "tolga",
       password: "123",
       email: "tolga@ngfl.k12.tr",
