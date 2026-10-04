@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4.1">
+  <link rel="stylesheet" href="css/style.css?v=4.2">
 </head>
 <body>
 
@@ -312,6 +312,15 @@
                     <!-- JS ile dinamik doldurulacak -->
                   </select>
                 </div>
+
+                <!-- Genel / Aylık Dönem Filtresi -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <label for="filterDashboardPeriod" style="font-size: 12px; font-weight: 700; color: var(--secondary);">Dönem:</label>
+                  <select id="filterDashboardPeriod" class="form-select" style="padding: 6px 10px; font-size: 12px; font-weight: 600; width: auto; min-width: 125px;">
+                    <option value="all">Genel (Tümü)</option>
+                    <option value="month">Aylık (Son 30 Gün)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -402,15 +411,19 @@
 
         <!-- Grafikler -->
         <div class="charts-grid">
+          <!-- 1. TYT Net Gelişim Çizgisi -->
           <div class="card">
             <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <h3>TYT Net Gelişim Çizgisi</h3>
-                <span class="badge badge-outline">Tüm Denemeler</span>
+                <span class="badge badge-primary">TYT</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <label for="tytChartSubjectFilter" style="font-size: 11px; font-weight: 600; color: var(--text-muted);">Ders Seçimi:</label>
-                <select id="tytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 140px;">
+                <select id="tytPeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+                <select id="tytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 130px;">
                   <option value="summary">Özet (Toplam ve Hedef)</option>
                   <option value="all">Tüm Dersleri Göster</option>
                   <option value="turkce">TYT Türkçe</option>
@@ -427,15 +440,19 @@
             </div>
           </div>
 
+          <!-- 2. AYT Net Gelişim Çizgisi -->
           <div class="card">
             <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <h3>AYT Net Gelişim Çizgisi</h3>
-                <span class="badge badge-outline">Alan Denemeleri</span>
+                <span class="badge badge-success">AYT</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <label for="aytChartSubjectFilter" style="font-size: 11px; font-weight: 600; color: var(--text-muted);">Ders Seçimi:</label>
-                <select id="aytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 140px;">
+                <select id="aytPeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+                <select id="aytChartSubjectFilter" class="form-select" style="padding: 4px 8px; font-size: 12px; width: auto; min-width: 130px;">
                   <option value="summary">Özet (Toplam ve Hedef)</option>
                   <option value="all">Tüm Dersleri Göster</option>
                   <option value="matematik">AYT Matematik</option>
@@ -452,10 +469,40 @@
             </div>
           </div>
 
+          <!-- 3. Ders Bazlı Soru Çözüm Dağılımı (AYT Net Gelişim Çizgisinin Sağında) -->
           <div class="card">
-            <div class="card-header">
-              <h3>Son Deneme Branş Başarı Dağılımı (%) - TYT</h3>
-              <span class="badge badge-primary">TYT Dersleri</span>
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>Ders Bazlı Soru Çözüm Dağılımı</h3>
+                <span class="badge badge-warning">Soru</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <select id="questionsPeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-wrapper">
+                <canvas id="chartQuestionsDashboard"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Son Deneme Branş Başarı Dağılımı (%) - TYT (AYT Radarının Solunda) -->
+          <div class="card">
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>Son Deneme Branş Başarı Dağılımı (%) - TYT</h3>
+                <span class="badge badge-primary">TYT Dersleri</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <select id="radarPeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+              </div>
             </div>
             <div class="card-body">
               <div class="chart-wrapper">
@@ -464,10 +511,19 @@
             </div>
           </div>
 
+          <!-- 5. Son Deneme Branş Başarı Dağılımı (%) - AYT -->
           <div class="card">
-            <div class="card-header">
-              <h3>Son Deneme Branş Başarı Dağılımı (%) - AYT</h3>
-              <span class="badge badge-success">AYT Dersleri</span>
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>Son Deneme Branş Başarı Dağılımı (%) - AYT</h3>
+                <span class="badge badge-success">AYT Dersleri</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <select id="aytRadarPeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+              </div>
             </div>
             <div class="card-body">
               <div class="chart-wrapper">
@@ -476,14 +532,23 @@
             </div>
           </div>
 
+          <!-- 6. Devamsızlık Dağılımı Grafiği (Son Deneme AYT'nin Yanında) -->
           <div class="card">
-            <div class="card-header">
-              <h3>Ders Bazlı Soru Çözüm Dağılımı</h3>
-              <span class="badge badge-outline">Toplam</span>
+            <div class="card-header" style="flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>Ders Devamsızlık Dağılımı (Saat)</h3>
+                <span class="badge badge-danger">Devam</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <select id="attendancePeriodSelect" class="form-select chart-period-select" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                  <option value="all">Genel</option>
+                  <option value="month">Aylık</option>
+                </select>
+              </div>
             </div>
             <div class="card-body">
               <div class="chart-wrapper">
-                <canvas id="chartQuestionsDashboard"></canvas>
+                <canvas id="chartAttendanceDashboard"></canvas>
               </div>
             </div>
           </div>
@@ -1316,10 +1381,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=4.1"></script>
-  <script src="js/store.js?v=4.1"></script>
-  <script src="js/analytics.js?v=4.1"></script>
-  <script src="js/charts.js?v=4.1"></script>
-  <script src="js/app.js?v=4.1"></script>
+  <script src="js/models.js?v=4.2"></script>
+  <script src="js/store.js?v=4.2"></script>
+  <script src="js/analytics.js?v=4.2"></script>
+  <script src="js/charts.js?v=4.2"></script>
+  <script src="js/app.js?v=4.2"></script>
 </body>
 </html>
