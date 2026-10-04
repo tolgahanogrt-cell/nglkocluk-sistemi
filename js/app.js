@@ -457,7 +457,7 @@ class App {
     if (!student) return;
 
     ChartManager.renderTytChart("chartTytDashboard", student.exams, student.targetTytNet);
-    ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet);
+    ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet, student.field);
     ChartManager.renderSubjectRadar("chartRadarDashboard", student);
     ChartManager.renderAytSubjectRadar("chartAytRadarDashboard", student);
     ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", student.questionLogs);
