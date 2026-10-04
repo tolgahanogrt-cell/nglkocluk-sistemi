@@ -16,7 +16,7 @@
   <script src="lib/chart.umd.min.js"></script>
   <!-- Tailwind 2 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=5.4">
+  <link rel="stylesheet" href="css/style.css?v=5.5">
 </head>
 <body>
 
@@ -100,11 +100,14 @@
     <!-- SOL MENÜ (SIDEBAR) -->
     <aside class="sidebar">
       <div class="brand">
-        <img src="img/logo.png" alt="Nafi Güral Fen Lisesi" class="school-logo-img sidebar-logo-img">
-        <div>
-          <div class="brand-title">Koçluk Sistemi</div>
-          <div class="brand-subtitle">Nafi Güral Fen Lisesi</div>
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+          <img src="img/logo.png" alt="Nafi Güral Fen Lisesi" class="school-logo-img sidebar-logo-img">
+          <div>
+            <div class="brand-title">Koçluk Sistemi</div>
+            <div class="brand-subtitle">Nafi Güral Fen Lisesi</div>
+          </div>
         </div>
+        <button id="btnCloseSidebarMobile" class="mobile-only-btn" title="Menüyü Kapat" aria-label="Menüyü Kapat">&times;</button>
       </div>
 
       <!-- Öğrenci Seçici (Öğrenci modunda gizlenir) -->
@@ -204,13 +207,22 @@
       </div>
     </aside>
 
+    <!-- Mobil Menü Karartma Arka Planı (Backdrop) -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
     <!-- SAĞ ANA İÇERİK -->
     <div class="main-wrapper">
       <!-- Üst Başlık Çubuğu -->
       <header class="topbar">
-        <div class="page-info">
-          <h1 id="topbarTitle">Genel Bakış</h1>
-          <p id="topbarSubtitle">Öğrenci gelişim ve koçluk paneli</p>
+        <div class="topbar-left">
+          <!-- Mobil Menü Hamburger Butonu -->
+          <button id="btnMobileMenuToggle" class="mobile-menu-btn" title="Menüyü Aç" aria-label="Menüyü Aç">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="page-info">
+            <h1 id="topbarTitle">Genel Bakış</h1>
+            <p id="topbarSubtitle">Öğrenci gelişim ve koçluk paneli</p>
+          </div>
         </div>
 
         <!-- YKS Geri Sayım Rozeti -->
@@ -1788,10 +1800,10 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/models.js?v=5.4"></script>
-  <script src="js/store.js?v=5.4"></script>
-  <script src="js/analytics.js?v=5.4"></script>
-  <script src="js/charts.js?v=5.4"></script>
-  <script src="js/app.js?v=5.4"></script>
+  <script src="js/models.js?v=5.5"></script>
+  <script src="js/store.js?v=5.5"></script>
+  <script src="js/analytics.js?v=5.5"></script>
+  <script src="js/charts.js?v=5.5"></script>
+  <script src="js/app.js?v=5.5"></script>
 </body>
 </html>
