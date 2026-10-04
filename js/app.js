@@ -400,6 +400,23 @@ class App {
       this.questionFilterSubject = null;
       this.renderQuestionsTable();
     });
+
+    // 13. Mobil Menü Açma/Kapatma Olayları
+    document.getElementById("btnMobileMenuToggle")?.addEventListener("click", () => this.openMobileSidebar());
+    document.getElementById("btnCloseSidebarMobile")?.addEventListener("click", () => this.closeMobileSidebar());
+    document.getElementById("sidebarBackdrop")?.addEventListener("click", () => this.closeMobileSidebar());
+  }
+
+  openMobileSidebar() {
+    document.querySelector(".sidebar")?.classList.add("mobile-open");
+    document.getElementById("sidebarBackdrop")?.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  closeMobileSidebar() {
+    document.querySelector(".sidebar")?.classList.remove("mobile-open");
+    document.getElementById("sidebarBackdrop")?.classList.remove("active");
+    document.body.style.overflow = "";
   }
 
   renderAdminProfile() {
@@ -458,6 +475,7 @@ class App {
 
   // --- Sekme Yöneticisi ---
   switchTab(tabId) {
+    this.closeMobileSidebar();
     const currentRole = window.store.getRole();
     if ((tabId === "admin" || tabId === "profile") && currentRole !== "admin") {
       tabId = currentRole === "teacher" ? "students" : "dashboard";
