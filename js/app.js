@@ -53,7 +53,7 @@ class App {
       }
       // Öğretmen admin sekmesinde ASLA kalamaz!
       if (this.currentTab === "admin") {
-        this.switchTab("students");
+        this.switchTab("dashboard");
       }
     } else if (role === "student") {
       if (userNameEl) userNameEl.textContent = user?.name || "Öğrenci";
@@ -83,7 +83,7 @@ class App {
       const res = window.store.loginTeacher(u, p);
       if (res.success) {
         this.checkAuth();
-        this.switchTab("students");
+        this.switchTab("dashboard");
         this.showToast(`Hoş geldiniz, ${res.user.name}!`, "success");
       } else {
         alert(res.message);
