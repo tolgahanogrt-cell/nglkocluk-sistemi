@@ -75,7 +75,7 @@
         <form id="formAdminLogin" style="display: none;">
           <div class="form-group" style="margin-bottom: 12px;">
             <label class="form-label">Sistem Yöneticisi Kullanıcı Adı</label>
-            <input type="text" id="adminUsernameInput" class="form-input" placeholder="admin" required>
+            <input type="text" id="adminUsernameInput" class="form-input" placeholder="Kullanıcı adınız..." required>
           </div>
           <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label">Yönetici Şifresi</label>
@@ -85,6 +85,11 @@
             Sistem Yöneticisi Girişi
           </button>
         </form>
+      </div>
+      <div class="auth-copyright" style="padding: 14px 20px 18px; text-align: center; font-size: 11px; line-height: 1.5; color: var(--text-muted);">
+        &copy;2026 Nafi Güral Fen Lisesi Öğrenci Takip Sistemi (ÖTS) -
+        <a href="mailto:tolgahancobanoglu@gmail.com" style="color: var(--primary); font-weight: 600; text-decoration: none;">Tolgahan ÇOBANOĞLU</a>
+        tarafından hazırlanmıştır. Tüm hakları saklıdır.
       </div>
     </div>
   </div>
@@ -168,6 +173,12 @@
           Öğrenci Yönetimi
         </button>
 
+        <!-- Yönetici Profili -->
+        <button class="nav-item admin-only" data-tab="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profilim
+        </button>
+
         <!-- Yöneticiye Özel Sekme (En Altta) -->
         <button class="nav-item admin-only" data-tab="admin">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -208,6 +219,38 @@
           <button class="btn btn-danger btn-sm" id="btnTopbarLogout" title="Sistemden Çıkış Yap">🚪 Çıkış</button>
         </div>
       </header>
+
+      <!-- ================= SEKME: YÖNETİCİ PROFİLİ ================= -->
+      <section id="page-profile" class="page-container">
+        <div class="card" style="max-width: 640px;">
+          <div class="card-header"><h3>Profil Bilgilerim</h3></div>
+          <div class="card-body">
+            <form id="formAdminProfile">
+              <div class="form-grid" style="margin-bottom: 12px;">
+                <div class="form-group">
+                  <label class="form-label">Adı Soyadı *</label>
+                  <input type="text" id="profileName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Görevi *</label>
+                  <input type="text" id="profileTitle" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-grid" style="margin-bottom: 16px;">
+                <div class="form-group">
+                  <label class="form-label">Kullanıcı Adı *</label>
+                  <input type="text" id="profileUsername" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Şifre *</label>
+                  <input type="text" id="profilePassword" class="form-input" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="btnSaveAdminProfile">Profili Güncelle</button>
+            </form>
+          </div>
+        </div>
+      </section>
 
       <!-- ================= SEKME 0: SİSTEM YÖNETİCİSİ (ÖĞRETMEN YÖNETİMİ) ================= -->
       <section id="page-admin" class="page-container">
