@@ -778,7 +778,7 @@ class App {
 
     const students = window.store.getStudents();
     if (students.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">Henüz tanımlanmış öğrenci bulunmuyor. Yeni öğrenci eklemek için "+ Yeni Öğrenci Tanımla" butonuna basınız.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:24px; color:var(--text-muted);">Henüz tanımlanmış öğrenci bulunmuyor. Yeni öğrenci eklemek için "+ Yeni Öğrenci Tanımla" butonuna basınız.</td></tr>`;
       return;
     }
 
@@ -799,6 +799,7 @@ class App {
             </div>
           </div>
         </td>
+        <td><strong style="font-size:12.5px;">${s.studentNumber || '-'}</strong></td>
         <td><span class="badge badge-primary">${s.field}</span></td>
         <td><span class="badge badge-outline">${s.grade}${s.section ? ' (' + s.section + ' Şubesi)' : ''}</span></td>
         <td><code>${s.username}</code></td>
@@ -826,6 +827,8 @@ class App {
     document.getElementById("btnSaveStudent").textContent = "Değişiklikleri Kaydet";
 
     document.getElementById("stdName").value = student.name;
+    const stdNumEl = document.getElementById("stdNumber");
+    if (stdNumEl) stdNumEl.value = student.studentNumber || "";
     document.getElementById("stdUsername").value = student.username;
     document.getElementById("stdPassword").value = student.password;
     document.getElementById("stdField").value = student.field;
@@ -846,6 +849,8 @@ class App {
 
     document.getElementById("editStudentId").value = student.id;
     document.getElementById("editStudentName").value = student.name;
+    const editNumEl = document.getElementById("editStudentNumber");
+    if (editNumEl) editNumEl.value = student.studentNumber || "";
     const gradeEl = document.getElementById("editStudentGrade");
     if (gradeEl) gradeEl.value = student.grade || "12. Sınıf";
     const secEl = document.getElementById("editStudentSection");
@@ -872,8 +877,10 @@ class App {
       return;
     }
 
+    const studentNumber = document.getElementById("editStudentNumber")?.value.trim() || "";
     const res = window.store.updateStudent(id, {
       name,
+      studentNumber,
       grade,
       section,
       field,
@@ -1831,6 +1838,8 @@ class App {
     const yyyy = now.getFullYear();
     document.getElementById("karneReportDate").textContent = `${dd}.${mm}.${yyyy}`;
     document.getElementById("karneStudentName").textContent = student.name;
+    const karneNumEl = document.getElementById("karneStudentNumber");
+    if (karneNumEl) karneNumEl.textContent = student.studentNumber || "-";
     document.getElementById("karneSignStudentName").textContent = student.name;
     document.getElementById("karneStudentField").textContent = `${student.grade} / ${student.field}`;
     document.getElementById("karneStudentTarget").textContent = `${student.targetUniversity} - ${student.targetDepartment}`;
@@ -2265,6 +2274,7 @@ class App {
 
     const newStudent = window.store.addStudent({
       name: name,
+      studentNumber: (document.getElementById("stdNumber")?.value || "").trim(),
       username: username,
       password: password,
       field: document.getElementById("stdField").value,
