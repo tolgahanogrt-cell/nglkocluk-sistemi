@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="icon" href="img/favicon.png" type="image/png">
   <script src="lib/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=3.7">
+  <link rel="stylesheet" href="css/style.css?v=3.8">
 </head>
 <body>
 
@@ -816,6 +816,84 @@
     </div>
   </div>
 
+  <!-- MODAL: ÖĞRETMEN KULLANICI ADI VE ŞİFRE DÜZENLEME (YÖNETİCİ) -->
+  <div class="modal-overlay" id="modalEditTeacherCredentials">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Öğretmen Kullanıcı Adı ve Şifre Güncelle</h3>
+        <button class="modal-close-btn" data-close="modalEditTeacherCredentials">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditTeacherCredentials">
+          <input type="hidden" id="editTeacherId">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Öğretmen Adı Soyadı</label>
+            <input type="text" id="editTeacherName" class="form-input" readonly style="background: var(--bg-main); font-weight: 600;">
+          </div>
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Yeni Kullanıcı Adı *</label>
+              <input type="text" id="editTeacherUsername" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre *</label>
+              <input type="text" id="editTeacherPassword" class="form-input" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Eski Kullanıcı Adı ve Şifre Geçmişi</label>
+            <div id="teacherCredentialsHistory" style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px; max-height: 140px; overflow-y: auto; font-size: 12px;">
+              <!-- JS ile doldurulacak -->
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalEditTeacherCredentials">Vazgeç</button>
+        <button class="btn btn-primary" id="btnSaveEditTeacherCredentials">Bilgileri Güncelle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ÖĞRENCİ KULLANICI ADI VE ŞİFRE DÜZENLEME (ÖĞRETMEN / YÖNETİCİ) -->
+  <div class="modal-overlay" id="modalEditStudentCredentials">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Öğrenci Kullanıcı Adı ve Şifre Güncelle</h3>
+        <button class="modal-close-btn" data-close="modalEditStudentCredentials">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formEditStudentCredentials">
+          <input type="hidden" id="editStudentId">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Öğrenci Adı Soyadı</label>
+            <input type="text" id="editStudentName" class="form-input" readonly style="background: var(--bg-main); font-weight: 600;">
+          </div>
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Yeni Kullanıcı Adı *</label>
+              <input type="text" id="editStudentUsername" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Yeni Şifre *</label>
+              <input type="text" id="editStudentPassword" class="form-input" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Eski Kullanıcı Adı ve Şifre Geçmişi</label>
+            <div id="studentCredentialsHistory" style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px; max-height: 140px; overflow-y: auto; font-size: 12px;">
+              <!-- JS ile doldurulacak -->
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="modalEditStudentCredentials">Vazgeç</button>
+        <button class="btn btn-primary" id="btnSaveEditStudentCredentials">Bilgileri Güncelle</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL 3: DENEME SINAVI EKLE -->
   <div class="modal-overlay" id="modalExam">
     <div class="modal-box" style="max-width: 680px;">
@@ -1133,10 +1211,10 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scriptler -->
-  <script src="js/models.js?v=3.7"></script>
-  <script src="js/store.js?v=3.7"></script>
-  <script src="js/analytics.js?v=3.7"></script>
-  <script src="js/charts.js?v=3.7"></script>
-  <script src="js/app.js?v=3.7"></script>
+  <script src="js/models.js?v=3.8"></script>
+  <script src="js/store.js?v=3.8"></script>
+  <script src="js/analytics.js?v=3.8"></script>
+  <script src="js/charts.js?v=3.8"></script>
+  <script src="js/app.js?v=3.8"></script>
 </body>
 </html>
