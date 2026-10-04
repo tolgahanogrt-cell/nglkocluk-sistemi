@@ -1,11 +1,35 @@
-// Öğrenci Koçluk Sistemi - Veri Modelleri ve Demo Veriler
+// Öğrenci Koçluk Sistemi - Veri Modelleri ve Başlangıç Verileri
 
 const INITIAL_DEMO_DATA = {
+  // Sistem Yöneticisi
+  admin: {
+    username: "admin",
+    password: "123",
+    name: "Sistem Yöneticisi"
+  },
+
+  // Öğretmenler / Koçlar
+  teachers: [
+    {
+      id: "tch-1",
+      name: "Tolga Öğretmen",
+      branch: "Rehberlik ve Koçluk",
+      username: "tolga",
+      password: "123",
+      email: "tolga@ngfl.k12.tr",
+      createdAt: "2026-09-01"
+    }
+  ],
+
+  // Öğrenciler
   students: [
     {
       id: "std-1",
+      teacherId: "tch-1",
       name: "Zeynep Kaya",
-      field: "Sayısal", // Sayısal, Eşit Ağırlık, Sözel, Dil
+      username: "zeynep",
+      password: "123",
+      field: "Sayısal",
       grade: "12. Sınıf",
       targetUniversity: "Boğaziçi Üniversitesi",
       targetDepartment: "Bilgisayar Mühendisliği",
@@ -127,32 +151,25 @@ const INITIAL_DEMO_DATA = {
         { id: "ql-11", date: "2026-10-03", subject: "Kimya", count: 50, correct: 46, wrong: 3, duration: 50 },
         { id: "ql-12", date: "2026-10-04", subject: "Genel Deneme Tekrarı", count: 120, correct: 105, wrong: 11, duration: 130 }
       ],
-      attendance: [
-        { id: "at-1", date: "2026-09-08", title: "Haftalık Koçluk Seansı 1", type: "Koçluk", status: "Katıldı", notes: "Aylık plan oluşturuldu." },
-        { id: "at-2", date: "2026-09-15", title: "Haftalık Koçluk Seansı 2", type: "Koçluk", status: "Katıldı", notes: "Limit TYT analizi yapıldı." },
-        { id: "at-3", date: "2026-09-22", title: "Haftalık Koçluk Seansı 3", type: "Koçluk", status: "Katıldı", notes: "AYT fizik eksikleri listelendi." },
-        { id: "at-4", date: "2026-09-29", title: "Haftalık Koçluk Seansı 4", type: "Koçluk", status: "Katıldı", notes: "Soru hedefi 1400'e çıkarıldı." },
-        { id: "at-5", date: "2026-10-01", title: "Kurum Matematik Etüdü", type: "Etüt", status: "Katıldı", notes: "Türev-İntegral hazırlık." },
-        { id: "at-6", date: "2026-10-03", title: "Hafta Sonu Kampı", type: "Etüt", status: "İzinli", notes: "Ailevi mazeret bildirildi." }
+      // Ders Devamsızlıkları (Okul/Ders Bazlı)
+      courseAttendance: [
+        { id: "ca-1", date: "2026-09-18", type: "Özürlü / Raporlu", hours: 8, reason: "Hastaneye sevk edildi" },
+        { id: "ca-2", date: "2026-09-25", type: "İzinli / Etkinlik", hours: 4, reason: "Münazara yarışması görevi" }
       ],
-      coachingNotes: [
-        {
-          id: "cn-1",
-          date: "2026-09-29",
-          coachMood: "Çok İyi",
-          studentMotivation: 9,
-          summary: "Zeynep son 3 haftada TYT'de 88 netten 103 nete çıkarak müthiş bir sıçrama yaptı. Özellikle Matematikte problem teknikleri oturdu.",
-          assignments: [
-            "Haftalık minimum 1400 soru tamamlanacak",
-            "Fizik Elektrik ve Manyetizma fasikülü bitirilecek",
-            "Hergün 30 Paragraf + 20 Problem rutini aksatılmayacak"
-          ]
-        }
+      // Koçluk Görüşmeleri ve Seansları
+      coachingSessions: [
+        { id: "cs-1", date: "2026-09-08", title: "1. Hafta Koçluk Planlama", status: "Katıldı", studentMotivation: 8, summary: "Yıllık hedefler ve haftalık soru planı belirlendi.", assignments: ["Günde 30 paragraf", "Matematik temel kavramlar"] },
+        { id: "cs-2", date: "2026-09-15", title: "2. Hafta TYT Deneme Değerlendirmesi", status: "Katıldı", studentMotivation: 9, summary: "Özdebir denemesi çözüldü, netler analiz edildi.", assignments: ["Geometri üçgenler fasikülü", "Fizik kuvvet ve hareket"] },
+        { id: "cs-3", date: "2026-09-22", title: "3. Hafta Motivasyon ve AYT Girişi", status: "Katıldı", studentMotivation: 8.5, summary: "AYT çalışma takvimi oluşturuldu.", assignments: ["Limit TYT analizi", "Haftalık 1400 soru hedefi"] },
+        { id: "cs-4", date: "2026-09-29", title: "4. Hafta Gelişim Raporu", status: "Katıldı", studentMotivation: 9, summary: "Zeynep son 3 haftada TYT'de belirgin yükseliş yakaladı.", assignments: ["Fizik elektrik ve manyetizma", "Günlük 30 paragraf + 20 problem"] }
       ]
     },
     {
       id: "std-2",
+      teacherId: "tch-1",
       name: "Emir Demir",
+      username: "emir",
+      password: "123",
       field: "Eşit Ağırlık",
       grade: "Mezun",
       targetUniversity: "Koç Üniversitesi",
@@ -237,25 +254,12 @@ const INITIAL_DEMO_DATA = {
         { id: "ql-205", date: "2026-10-02", subject: "Coğrafya", count: 50, correct: 46, wrong: 3, duration: 40 },
         { id: "ql-206", date: "2026-10-03", subject: "Matematik", count: 90, correct: 75, wrong: 8, duration: 100 }
       ],
-      attendance: [
-        { id: "at-201", date: "2026-09-09", title: "Haftalık Koçluk 1", type: "Koçluk", status: "Katıldı", notes: "Başlangıç planı." },
-        { id: "at-202", date: "2026-09-16", title: "Haftalık Koçluk 2", type: "Koçluk", status: "Katıldı", notes: "Matematik geometri denemesi." },
-        { id: "at-203", date: "2026-09-23", title: "Haftalık Koçluk 3", type: "Koçluk", status: "Katıldı", notes: "Edebiyat tekrarları." },
-        { id: "at-204", date: "2026-09-30", title: "Haftalık Koçluk 4", type: "Koçluk", status: "Katıldı", notes: "Genel motivasyon." }
+      courseAttendance: [
+        { id: "ca-201", date: "2026-09-22", type: "Özürsüz", hours: 6, reason: "Mazeretsiz devamsızlık" }
       ],
-      coachingNotes: [
-        {
-          id: "cn-201",
-          date: "2026-09-30",
-          coachMood: "Harika",
-          studentMotivation: 8.5,
-          summary: "Emir mezun psikolojisini tamamen aştı ve disiplinli bir şekilde devam ediyor. AYT Edebiyat ve Coğrafya fulle yakın.",
-          assignments: [
-            "AYT Matematikte Analitik Geometri ve Trigonometri testleri",
-            "Haftada 2 adet TYT Sosyal branş denemesi",
-            "Tarih-1 Inkılap Tarihi kronoloji tekrarı"
-          ]
-        }
+      coachingSessions: [
+        { id: "cs-201", date: "2026-09-09", title: "1. Hafta Tanışma ve Planlama", status: "Katıldı", studentMotivation: 8, summary: "Mezun programı çıkarıldı.", assignments: ["Geometri başlangıç"] },
+        { id: "cs-202", date: "2026-09-23", title: "2. Hafta Edebiyat Analizi", status: "Katıldı", studentMotivation: 8.5, summary: "Edebiyat netleri yüksek.", assignments: ["AYT Matematik türev"] }
       ]
     }
   ]
