@@ -206,6 +206,50 @@ class App {
       ChartManager.filterAytDatasets(e.target.value);
     });
 
+    // 5c. Grafik Dönem (Genel / Aylık) Filtre Dinleyicileri
+    document.getElementById("filterDashboardPeriod")?.addEventListener("change", (e) => {
+      const val = e.target.value;
+      const selects = [
+        "tytPeriodSelect", "aytPeriodSelect", "questionsPeriodSelect",
+        "radarPeriodSelect", "aytRadarPeriodSelect", "attendancePeriodSelect"
+      ];
+      selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
+      this.renderCharts();
+    });
+
+    document.getElementById("tytPeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderTytChart("chartTytDashboard", s.exams, s.targetTytNet);
+    });
+
+    document.getElementById("aytPeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderAytChart("chartAytDashboard", s.exams, s.targetAytNet, s.field);
+    });
+
+    document.getElementById("questionsPeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", s.questionLogs);
+    });
+
+    document.getElementById("radarPeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderSubjectRadar("chartRadarDashboard", s);
+    });
+
+    document.getElementById("aytRadarPeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderAytSubjectRadar("chartAytRadarDashboard", s);
+    });
+
+    document.getElementById("attendancePeriodSelect")?.addEventListener("change", () => {
+      const s = window.store.getActiveStudent();
+      if (s) ChartManager.renderAttendanceChart("chartAttendanceDashboard", s.courseAttendance);
+    });
+
     // 6. Hızlı Butonlar
     document.getElementById("btnQuickAddStudent")?.addEventListener("click", () => this.openModal("modalStudent"));
     document.getElementById("btnQuickAddExam")?.addEventListener("click", () => this.openModal("modalExam"));
@@ -733,9 +777,10 @@ class App {
 
     ChartManager.renderTytChart("chartTytDashboard", student.exams, student.targetTytNet);
     ChartManager.renderAytChart("chartAytDashboard", student.exams, student.targetAytNet, student.field);
+    ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", student.questionLogs);
     ChartManager.renderSubjectRadar("chartRadarDashboard", student);
     ChartManager.renderAytSubjectRadar("chartAytRadarDashboard", student);
-    ChartManager.renderWeeklyQuestionsChart("chartQuestionsDashboard", student.questionLogs);
+    ChartManager.renderAttendanceChart("chartAttendanceDashboard", student.courseAttendance);
   }
 
   renderExamsTable(student) {
