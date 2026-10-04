@@ -327,8 +327,9 @@ class App {
       this.handleSaveAdminProfile();
     });
 
-    // 11. PDF / Yazdır Butonu
+    // 11. PDF / Yazdır ve Karne Dönem Filtresi
     document.getElementById("btnPrintKarneAction")?.addEventListener("click", () => this.printKarne());
+    document.getElementById("karnePeriodSelect")?.addEventListener("change", () => this.renderKarne());
   }
 
   renderAdminProfile() {
@@ -1242,7 +1243,129 @@ class App {
     }
   }
 
-  renderKarne() {
+  // --- Karne Filtreleme ve Kapsam Yardımcısı (Haftalık, Aylık, Genel) ---
+  getKarneFilteredData(student, period = "all") {
+    if (!student) return null;
+
+    let periodLabel = "Genel Karne (Tüm Dönem)";
+    let section2Title = "2. Performans ve Çalışma Özeti (Tüm Dönem)";
+    let section3Title = "3. Deneme Sınavları Sonuçları";
+    let tytLabel = "Son TYT / En Yüksek TYT";
+    let aytLabel = "Son AYT / En Yüksek AYT";
+    let questionLabel = "Toplam Çözülen Soru";
+    let attendanceLabel = "Ders Devamsızlığı";
+
+    if (period === "all" || !period) {
+      return {
+        scopedStudent: student,
+        periodLabel,
+        section2Title,
+        section3Title,
+        tytLabel,
+        aytLabel,
+        questionLabel,
+        attendanceLabel,
+        period: "all"
+      };
+    }
+
+    // Referans tarih: Öğrencinin aktivitelerinden veya geçerli tarihten en güncel olanı referans alır
+    let refDate = new Date();
+    const allTimestamps = [
+      ...(student.exams || []).map(e => new Date(e.date).getTime()),
+      ...(student.questionLogs || []).map(q => new Date(q.date).getTime()),
+      ...(student.courseAttendance || []).map(a => new Date(a.date).getTime())
+    ].filter(t => !isNaN(t));
+
+    if (allTimestamps.length > 0) {
+      const maxDataTime = Math.max(...allTimestamps);
+      if (refDate.getTime() < maxDataTime) {
+        refDate = new Date(maxDataTime);
+      }
+    }
+
+    let filterFn = () => true;
+
+    if (period === "weekly") {
+      const sevenDaysAgo = new Date(refDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+      const endLimit = new Date(refDate.getTime() + 24 * 60 * 60 * 1000);
+      filterFn = (dStr) => {
+        if (!dStr) return false;
+        const d = new Date(dStr);
+        return !isNaN(d.getTime()) && d >= sevenDaysAgo && d <= endLimit;
+      };
+      periodLabel = "Haftalık Karne (Son 7 Gün)";
+      section2Title = "2. Haftalık Performans ve Çalışma Özeti (Son 7 Gün)";
+      section3Title = "3. Bu Haftaki Deneme Sınavları";
+      tytLabel = "Haftalık Son TYT / En İyi TYT";
+      aytLabel = "Haftalık Son AYT / En İyi AYT";
+      questionLabel = "Bu Hafta Çözülen Soru";
+      attendanceLabel = "Haftalık Devamsızlık";
+    } else if (period === "monthly") {
+      const thirtyDaysAgo = new Date(refDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
+      const endLimit = new Date(refDate.getTime() + 24 * 60 * 60 * 1000);
+      filterFn = (dStr) => {
+        if (!dStr) return false;
+        const d = new Date(dStr);
+        return !isNaN(d.getTime()) && d >= thirtyDaysAgo && d <= endLimit;
+      };
+      periodLabel = "Aylık Karne (Son 30 Gün)";
+      section2Title = "2. Aylık Performans ve Çalışma Özeti (Son 30 Gün)";
+      section3Title = "3. Bu Ayki Deneme Sınavları (Son 30 Gün)";
+      tytLabel = "Aylık Son TYT / En İyi TYT";
+      aytLabel = "Aylık Son AYT / En İyi AYT";
+      questionLabel = "Bu Ay Çözülen Soru (Son 30 Gün)";
+      attendanceLabel = "Aylık Devamsızlık (Son 30 Gün)";
+    } else if (period.startsWith("m")) {
+      const monthNum = parseInt(period.replace("m", ""), 10);
+      const monthNames = [
+        "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+        "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+      ];
+      const mName = monthNames[monthNum] || `Ay ${monthNum}`;
+      filterFn = (dStr) => {
+        if (!dStr) return false;
+        const d = new Date(dStr);
+        return !isNaN(d.getTime()) && (d.getMonth() + 1) === monthNum;
+      };
+      periodLabel = `${mName} Ayı Karnesi`;
+      section2Title = `2. ${mName} Ayı Performans ve Çalışma Özeti`;
+      section3Title = `3. ${mName} Ayı Deneme Sınavları Sonuçları`;
+      tytLabel = `${mName} Son TYT / En İyi TYT`;
+      aytLabel = `${mName} Son AYT / En İyi AYT`;
+      questionLabel = `${mName} Ayı Çözülen Soru`;
+      attendanceLabel = `${mName} Ayı Devamsızlık`;
+    }
+
+    const filteredExams = (student.exams || []).filter(e => filterFn(e.date));
+    const filteredQuestions = (student.questionLogs || []).filter(q => filterFn(q.date));
+    const filteredAttendance = (student.courseAttendance || []).filter(a => filterFn(a.date));
+    const filteredSessions = (student.coachingSessions || []).filter(c => filterFn(c.date));
+
+    const scopedStudent = {
+      ...student,
+      exams: filteredExams,
+      questionLogs: filteredQuestions,
+      courseAttendance: filteredAttendance,
+      coachingSessions: filteredSessions.length > 0 ? filteredSessions : (student.coachingSessions || [])
+    };
+
+    return {
+      scopedStudent,
+      periodLabel,
+      section2Title,
+      section3Title,
+      tytLabel,
+      aytLabel,
+      questionLabel,
+      attendanceLabel,
+      period
+    };
+  }
+
+  renderKarne(periodOverride = null) {
     const student = window.store.getActiveStudent();
     if (!student) {
       document.getElementById("karneReportDate").textContent = new Date().toLocaleDateString("tr-TR");
@@ -1266,12 +1389,42 @@ class App {
       if (attSum) attSum.textContent = "0 Gün (0 Saat)";
       const tbody = document.getElementById("karneExamsTableBody");
       if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">Karne oluşturmak için lütfen Sınıf ve Şube seçiniz.</td></tr>`;
+      const pScopeEl = document.getElementById("karnePeriodScopeText");
+      if (pScopeEl) pScopeEl.textContent = "Genel Karne (Tüm Dönem)";
       return;
     }
 
-    const stats = AnalyticsEngine.getStudentStats(student);
-    const analysis = AnalyticsEngine.analyzeProgress(student);
+    const periodSelect = document.getElementById("karnePeriodSelect");
+    const period = periodOverride || (periodSelect ? periodSelect.value : "all");
+    const filterResult = this.getKarneFilteredData(student, period);
+    const scopedStudent = filterResult.scopedStudent;
 
+    const stats = AnalyticsEngine.getStudentStats(scopedStudent);
+    const analysis = AnalyticsEngine.analyzeProgress(scopedStudent);
+
+    // Kapsam ve Başlık Etiketleri
+    const pScopeEl = document.getElementById("karnePeriodScopeText");
+    if (pScopeEl) pScopeEl.textContent = filterResult.periodLabel;
+
+    const s2Title = document.getElementById("karneSection2Title");
+    if (s2Title) s2Title.textContent = filterResult.section2Title;
+
+    const s3Title = document.getElementById("karneSection3Title");
+    if (s3Title) s3Title.textContent = filterResult.section3Title;
+
+    const tytLbl = document.getElementById("karneTytLabel");
+    if (tytLbl) tytLbl.textContent = filterResult.tytLabel;
+
+    const aytLbl = document.getElementById("karneAytLabel");
+    if (aytLbl) aytLbl.textContent = filterResult.aytLabel;
+
+    const qLbl = document.getElementById("karneQuestionLabel");
+    if (qLbl) qLbl.textContent = filterResult.questionLabel;
+
+    const attLbl = document.getElementById("karneAttendanceLabel");
+    if (attLbl) attLbl.textContent = filterResult.attendanceLabel;
+
+    // 1. Öğrenci Bilgileri
     document.getElementById("karneReportDate").textContent = new Date().toLocaleDateString("tr-TR");
     document.getElementById("karneStudentName").textContent = student.name;
     document.getElementById("karneSignStudentName").textContent = student.name;
@@ -1279,19 +1432,21 @@ class App {
     document.getElementById("karneStudentTarget").textContent = `${student.targetUniversity} - ${student.targetDepartment}`;
     document.getElementById("karneStudentTargetNets").textContent = `TYT: ${student.targetTytNet} | AYT: ${student.targetAytNet} Net`;
 
-    document.getElementById("karneTytSummary").textContent = `${stats.lastTyt} / ${stats.maxTyt} Net`;
-    document.getElementById("karneAytSummary").textContent = `${stats.lastAyt} / ${stats.maxAyt} Net`;
+    // 2. Performans Özeti
+    document.getElementById("karneTytSummary").textContent = stats.tytCount > 0 ? `${stats.lastTyt} / ${stats.maxTyt} Net` : "- / -";
+    document.getElementById("karneAytSummary").textContent = stats.aytCount > 0 ? `${stats.lastAyt} / ${stats.maxAyt} Net` : "- / -";
     document.getElementById("karneTotalQuestions").textContent = `${stats.totalQuestions} Soru (%${stats.accuracyRate} Doğruluk)`;
     document.getElementById("karneAttendanceSummary").textContent = `${stats.totalAbsentDays} Gün (${stats.totalAbsentHours} Saat)`;
 
+    // 3. Denemeler Tablosu (Seçilen Döneme Göre)
     const tbody = document.getElementById("karneExamsTableBody");
     if (tbody) {
       tbody.innerHTML = "";
-      const last5 = (student.exams || []).slice(-5).reverse();
-      if (last5.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7">Henüz sınav kaydı girilmedi.</td></tr>`;
+      const periodExams = (scopedStudent.exams || []).slice().reverse();
+      if (periodExams.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:18px; color:var(--text-muted);">Seçilen dönemde (${filterResult.periodLabel}) kayıtlı deneme sınavı bulunamadı.</td></tr>`;
       } else {
-        last5.forEach((ex, idx) => {
+        periodExams.slice(0, 10).forEach((ex, idx) => {
           let summary = "";
           if (ex.type === "TYT" && ex.tyt) {
             summary = `Tr: ${ex.tyt.turkce?.net || 0} | Mat: ${ex.tyt.matematik?.net || 0} | Sos: ${ex.tyt.sosyal?.net || 0} | Fen: ${ex.tyt.fen?.net || 0}`;
@@ -1299,16 +1454,20 @@ class App {
             const arr = [];
             if (ex.ayt.matematik) arr.push(`Mat: ${ex.ayt.matematik.net}`);
             if (ex.ayt.fizik) arr.push(`Fiz: ${ex.ayt.fizik.net}`);
+            if (ex.ayt.kimya) arr.push(`Kim: ${ex.ayt.kimya.net}`);
+            if (ex.ayt.biyoloji) arr.push(`Biyo: ${ex.ayt.biyoloji.net}`);
             if (ex.ayt.edebiyat) arr.push(`Edb: ${ex.ayt.edebiyat.net}`);
+            if (ex.ayt.tarih1) arr.push(`Tar: ${ex.ayt.tarih1.net}`);
+            if (ex.ayt.cografya1) arr.push(`Coğ: ${ex.ayt.cografya1.net}`);
             summary = arr.join(" | ");
           }
 
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${ex.date}</td>
+            <td>${AnalyticsEngine.formatDateTurkish(ex.date)}</td>
             <td><strong>${ex.type}</strong></td>
             <td>${ex.name}</td>
-            <td style="font-size:11px;">${summary}</td>
+            <td style="font-size:11px;">${summary || "-"}</td>
             <td><strong>${ex.totalNet} Net</strong></td>
             <td>${ex.estimatedScore}</td>
             <td>${idx === 0 ? 'Son Sınav (' + analysis.status + ')' : 'Stabil'}</td>
@@ -1318,15 +1477,21 @@ class App {
       }
     }
 
+    // 4. Koçluk Değerlendirmesi ve Aksiyon Planı
     const reviewBox = document.getElementById("karneCoachReviewText");
     if (reviewBox) {
-      const latestSession = (student.coachingSessions || [])[0];
-      const noteSummary = latestSession ? latestSession.summary : "Öğrenci genel olarak planlanan çalışma disiplinine uyum göstermektedir.";
-      const tipsHtml = analysis.recommendations.map(r => `<li>${r}</li>`).join("");
+      const latestSession = (scopedStudent.coachingSessions || [])[0];
+      const noteSummary = latestSession ? latestSession.summary : (student.notes || "Öğrenci genel olarak planlanan çalışma disiplinine ve koçluk hedeflerine uyum göstermektedir.");
+      let tipsHtml = "";
+      if (analysis.recommendations && analysis.recommendations.length > 0) {
+        tipsHtml = analysis.recommendations.map(r => `<li>${r}</li>`).join("");
+      } else {
+        tipsHtml = `<li>${filterResult.periodLabel} dönemi hedefleri doğrultusunda haftalık soru hedeflerine ve deneme tekrarlarına devam edilmelidir.</li>`;
+      }
 
       reviewBox.innerHTML = `
         <p style="margin-bottom:8px;"><strong>Koçluk Değerlendirmesi:</strong> ${noteSummary}</p>
-        <p style="margin-bottom:6px;"><strong>Önerilen Aksiyon Planı ve Hedefler:</strong></p>
+        <p style="margin-bottom:6px;"><strong>Önerilen Aksiyon Planı ve Hedefler (${filterResult.periodLabel}):</strong></p>
         <ul style="margin-left: 20px;">
           ${tipsHtml}
         </ul>
@@ -1345,6 +1510,9 @@ class App {
     const karneElem = document.getElementById("karneDocument");
     if (!karneElem) return;
 
+    const periodSelect = document.getElementById("karnePeriodSelect");
+    const periodLabel = periodSelect ? periodSelect.options[periodSelect.selectedIndex]?.text : "Genel Karne";
+
     // Yeni izole pencere açarak yazdır (iframe engellerini tamamen aşar)
     const printWindow = window.open("", "_blank", "width=950,height=800");
     if (!printWindow) {
@@ -1358,7 +1526,8 @@ class App {
       <html lang="tr">
       <head>
         <meta charset="UTF-8">
-        <title>Öğrenci Karnesi - ${student.name}</title>
+        <base href="${window.location.href}">
+        <title>Öğrenci Karnesi (${periodLabel}) - ${student.name}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1369,6 +1538,7 @@ class App {
           .karne-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 14px; margin-bottom: 20px; }
           .karne-logo-area { display: flex; align-items: center; gap: 12px; }
           .karne-logo-box { width: 44px; height: 44px; border-radius: 8px; background: #1d4ed8; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 800; }
+          .karne-logo-img { height: 48px; width: auto; object-fit: contain; }
           .karne-title-area h2 { font-size: 18px; font-weight: 800; color: #1e3a8a; }
           .karne-title-area p { font-size: 12px; color: #64748b; }
           .karne-meta-box { text-align: right; font-size: 12px; color: #475569; }
