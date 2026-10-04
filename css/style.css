@@ -916,37 +916,38 @@ body.role-teacher .admin-only {
   font-weight: 600;
 }
 
-/* --- ROL BAZLI GÖRÜNÜRLÜK KURALLARI --- */
+/* --- SAYFA VE ROL BAZLI GÖRÜNÜRLÜK KURALLARI --- */
+.page-container {
+  display: none !important;
+}
+.page-container.active {
+  display: block !important;
+}
+
+/* Rol Güvenliği: Uygun rol olmadan ilgili sayfa active olsa dahi gösterilmez */
+body:not(.role-admin) #page-admin {
+  display: none !important;
+}
+body:not(.role-teacher):not(.role-admin) #page-students {
+  display: none !important;
+}
+
 .admin-only,
 .teacher-only,
 .student-only {
   display: none !important;
 }
 
-/* Yönetici olmayan hiç kimse yönetici ekranını göremez */
-body:not(.role-admin) #page-admin,
-body:not(.role-admin) .admin-only {
-  display: none !important;
-}
-
 /* 1. SİSTEM YÖNETİCİSİ */
-body.role-admin .admin-only {
-  display: block !important;
-}
 body.role-admin .nav-item.admin-only,
 body.role-admin .btn.admin-only {
   display: flex !important;
 }
-body.role-admin .teacher-only,
-body.role-admin .student-only,
-body.role-admin #page-students {
-  display: none !important;
+body.role-admin .admin-only:not(.page-container):not(.nav-item):not(.btn) {
+  display: block !important;
 }
 
 /* 2. ÖĞRETMEN / KOÇ */
-body.role-teacher .teacher-only {
-  display: block !important;
-}
 body.role-teacher .nav-item.teacher-only,
 body.role-teacher .btn.teacher-only {
   display: flex !important;
@@ -954,23 +955,18 @@ body.role-teacher .btn.teacher-only {
 body.role-teacher .student-selector-box.teacher-only {
   display: block !important;
 }
-body.role-teacher .admin-only,
-body.role-teacher #page-admin {
-  display: none !important;
+body.role-teacher .teacher-only:not(.page-container):not(.nav-item):not(.btn):not(.student-selector-box) {
+  display: block !important;
 }
 
 /* 3. ÖĞRENCİ */
-body.role-student .student-only {
-  display: block !important;
-}
 body.role-student .nav-item.student-only,
 body.role-student .btn.student-only {
   display: flex !important;
 }
-body.role-student .admin-only,
-body.role-student .teacher-only,
-body.role-student #page-admin,
-body.role-student #page-students,
+body.role-student .student-only:not(.page-container):not(.nav-item):not(.btn) {
+  display: block !important;
+}
 body.role-student #sidebarStudentSelectorBox {
   display: none !important;
 }
