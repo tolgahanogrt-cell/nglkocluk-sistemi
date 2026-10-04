@@ -982,7 +982,9 @@ body.role-admin .admin-only:not(.page-container):not(.nav-item):not(.btn) {
 body.role-admin .teacher-and-admin-only:not(.page-container):not(.nav-item):not(.btn):not(th):not(td) {
   display: block !important;
 }
-body.role-admin .nav-item.teacher-and-admin-only,
+body.role-admin .nav-item.teacher-and-admin-only {
+  display: flex !important;
+}
 body.role-admin .btn.teacher-and-admin-only {
   display: inline-flex !important;
 }
@@ -998,7 +1000,9 @@ body.role-teacher .teacher-only:not(.page-container):not(.nav-item):not(.btn):no
 body.role-teacher .teacher-and-admin-only:not(.page-container):not(.nav-item):not(.btn):not(th):not(td) {
   display: block !important;
 }
-body.role-teacher .nav-item.teacher-and-admin-only,
+body.role-teacher .nav-item.teacher-and-admin-only {
+  display: flex !important;
+}
 body.role-teacher .btn.teacher-and-admin-only {
   display: inline-flex !important;
 }
