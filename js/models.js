@@ -31,6 +31,7 @@ const INITIAL_DEMO_DATA = {
       password: "123",
       field: "Sayısal",
       grade: "12. Sınıf",
+      section: "A",
       targetUniversity: "Boğaziçi Üniversitesi",
       targetDepartment: "Bilgisayar Mühendisliği",
       targetTytNet: 105,
@@ -172,6 +173,7 @@ const INITIAL_DEMO_DATA = {
       password: "123",
       field: "Eşit Ağırlık",
       grade: "Mezun",
+      section: "B",
       targetUniversity: "Koç Üniversitesi",
       targetDepartment: "Hukuk Fakültesi",
       targetTytNet: 92,
@@ -261,6 +263,88 @@ const INITIAL_DEMO_DATA = {
         { id: "cs-201", date: "2026-09-09", title: "1. Hafta Tanışma ve Planlama", status: "Katıldı", studentMotivation: 8, summary: "Mezun programı çıkarıldı.", assignments: ["Geometri başlangıç"] },
         { id: "cs-202", date: "2026-09-23", title: "2. Hafta Edebiyat Analizi", status: "Katıldı", studentMotivation: 8.5, summary: "Edebiyat netleri yüksek.", assignments: ["AYT Matematik türev"] }
       ]
+    },
+    {
+      id: "std-3",
+      teacherId: "tch-1",
+      name: "Canan Öztürk",
+      username: "canan",
+      password: "123",
+      field: "Sayısal",
+      grade: "11. Sınıf",
+      section: "A",
+      targetUniversity: "İTÜ",
+      targetDepartment: "Yapay Zeka ve Veri Mühendisliği",
+      targetTytNet: 98,
+      targetAytNet: 68,
+      targetWeeklyQuestions: 1100,
+      avatarColor: "#7c3aed",
+      notes: "11. sınıf sayısal konuları düzenli takip ediliyor.",
+      createdAt: "2026-09-05",
+      exams: [
+        {
+          id: "ex-301",
+          type: "TYT",
+          name: "Limit TYT Seviye Belirleme",
+          date: "2026-09-12",
+          difficulty: 3,
+          tyt: {
+            turkce: { d: 31, y: 6, b: 3, net: 29.50 },
+            matematik: { d: 26, y: 5, b: 9, net: 24.75 },
+            sosyal: { d: 14, y: 4, b: 2, net: 13.00 },
+            fen: { d: 13, y: 4, b: 3, net: 12.00 }
+          },
+          totalNet: 79.25,
+          estimatedScore: 388.0,
+          notes: "İlk deneme için iyi başlangıç."
+        }
+      ],
+      questionLogs: [
+        { id: "ql-301", date: "2026-10-01", subject: "Matematik", count: 70, correct: 62, wrong: 5, duration: 60 }
+      ],
+      courseAttendance: [],
+      coachingSessions: []
+    },
+    {
+      id: "std-4",
+      teacherId: "tch-1",
+      name: "Burak Yılmaz",
+      username: "burak",
+      password: "123",
+      field: "Sayısal",
+      grade: "12. Sınıf",
+      section: "C",
+      targetUniversity: "Hacettepe Üniversitesi",
+      targetDepartment: "Tıp Fakültesi",
+      targetTytNet: 108,
+      targetAytNet: 75,
+      targetWeeklyQuestions: 1500,
+      avatarColor: "#d97706",
+      notes: "Tıp hedefliyor, fen bilimleri gayet güçlü.",
+      createdAt: "2026-09-08",
+      exams: [
+        {
+          id: "ex-401",
+          type: "TYT",
+          name: "Toprak TYT-1",
+          date: "2026-09-19",
+          difficulty: 3,
+          tyt: {
+            turkce: { d: 35, y: 3, b: 2, net: 34.25 },
+            matematik: { d: 32, y: 3, b: 5, net: 31.25 },
+            sosyal: { d: 16, y: 3, b: 1, net: 15.25 },
+            fen: { d: 17, y: 2, b: 1, net: 16.50 }
+          },
+          totalNet: 97.25,
+          estimatedScore: 435.5,
+          notes: "Çok dengeli net dağılımı."
+        }
+      ],
+      questionLogs: [
+        { id: "ql-401", date: "2026-10-02", subject: "Biyoloji", count: 80, correct: 76, wrong: 2, duration: 60 }
+      ],
+      courseAttendance: [],
+      coachingSessions: []
     }
   ]
 };
