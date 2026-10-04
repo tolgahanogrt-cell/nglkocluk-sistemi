@@ -6,6 +6,22 @@ class App {
     this.examFilterPeriod = "all";
     this.questionFilterPeriod = "weekly";
     this.questionFilterSubject = null;
+    this.taskFilter = "all";
+    this.currentQuoteIndex = 0;
+    this.quotesList = [
+      "Başarı, her gün tekrarlanan küçük disiplinlerin toplamıdır. Bugün hedefini eksiksiz tamamla!",
+      "Zorlandığın soru, sana yeni bir şey öğreten sorudur. Yanlışlarından korkma, onları analiz et.",
+      "YKS bir zeka testi değil; süreklilik, strateji ve sabır maratonudur.",
+      "Paragraf ve problem rutinini aksatma; her gün çözülen 30 soru sınavda sana 20 dakika kazandırır.",
+      "Mükemmel olmayı bekleme, başla ve her gün bir önceki günden %1 daha iyi ol.",
+      "Deneme sınavı sonucun senin değerini değil, sadece eksik konularını gösterir.",
+      "Rakiplerin yorulduğunda devam edenler zirveye ulaşır. Hedefin Boğaziçi, ODTÜ, İTÜ, Tıp ise tempoyu koru!",
+      "Geometri görme işi değil; formülleri ve kuralları yüzlerce kez uygulayarak refleks haline getirme işidir.",
+      "Netlerini artırmanın en kestirme yolu, deneme sonrasında yaptığın 'yanlış analizi' saatidir.",
+      "Kendine inan! Nafi Güral Fen Lisesi'nin çalışkan ve kararlı öğrencisi olarak hayalindeki üniversite sana çok yakın.",
+      "Zamanını yöneten, sınavı yönetir. Masanın başına otur ve sadece o anki soruya odaklan.",
+      "Başarısızlık yoktur, sadece geri bildirim vardır. Her yanlış soru doğruya giden bir basamaktır."
+    ];
     this.bindEvents();
     this.checkAuth();
   }
@@ -283,6 +299,7 @@ class App {
     document.getElementById("btnQuickAddExam")?.addEventListener("click", () => this.openModal("modalExam"));
     document.getElementById("btnQuickAddQuestion")?.addEventListener("click", () => this.openModal("modalQuestion"));
     document.getElementById("btnQuickKarne")?.addEventListener("click", () => this.switchTab("karne"));
+    document.getElementById("btnQuickBackup")?.addEventListener("click", () => this.openModal("modalBackupRestore"));
 
     // 7. Modal Açma Butonları
     document.getElementById("btnOpenNewTeacherModal")?.addEventListener("click", () => this.openModal("modalTeacher"));
@@ -292,6 +309,7 @@ class App {
     document.getElementById("btnOpenNewQuestionModal")?.addEventListener("click", () => this.openModal("modalQuestion"));
     document.getElementById("btnOpenBulkCourseAttendanceModal")?.addEventListener("click", () => this.openModal("modalBulkCourseAttendance"));
     document.getElementById("btnOpenNewSessionModal")?.addEventListener("click", () => this.openModal("modalSession"));
+    document.getElementById("btnOpenNewTaskModal")?.addEventListener("click", () => this.openModal("modalTask"));
 
     // 8. Modal Kapatma
     document.querySelectorAll("[data-close]").forEach(btn => {
@@ -306,7 +324,7 @@ class App {
       });
     });
 
-    // 9. Form Kayıt Butonları
+    // 9. Form Kayıt ve İşlem Butonları
     document.getElementById("btnSaveTeacher")?.addEventListener("click", () => this.handleSaveTeacher());
     document.getElementById("btnSaveStudent")?.addEventListener("click", () => this.handleSaveStudent());
     document.getElementById("btnSaveEditTeacherCredentials")?.addEventListener("click", () => this.handleSaveTeacherCredentials());
@@ -315,6 +333,34 @@ class App {
     document.getElementById("btnSaveQuestion")?.addEventListener("click", () => this.handleSaveQuestion());
     document.getElementById("btnSaveBulkAttendance")?.addEventListener("click", () => this.handleSaveBulkAttendance());
     document.getElementById("btnSaveSession")?.addEventListener("click", () => this.handleSaveSession());
+    document.getElementById("btnSaveTask")?.addEventListener("click", () => this.handleSaveTask());
+    document.getElementById("btnNewQuote")?.addEventListener("click", () => this.rotateMotivationQuote());
+
+    // Yedekleme ve Excel Dışa Aktarma
+    document.getElementById("btnDownloadBackup")?.addEventListener("click", () => this.handleDownloadBackup());
+    document.getElementById("btnTriggerRestore")?.addEventListener("click", () => {
+      document.getElementById("backupFileInput")?.click();
+    });
+    document.getElementById("backupFileInput")?.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        this.handleRestoreBackup(e.target.files[0]);
+        e.target.value = "";
+      }
+    });
+    document.getElementById("btnExportExamsCSV")?.addEventListener("click", () => this.handleExportExamsCSV());
+    document.getElementById("btnExportQuestionsCSV")?.addEventListener("click", () => this.handleExportQuestionsCSV());
+    document.getElementById("btnExportStudentsCSV")?.addEventListener("click", () => this.handleExportStudentsCSV());
+
+    // Görev Filtre Butonları
+    document.querySelectorAll(".task-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".task-filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.taskFilter = btn.getAttribute("data-task-filter") || "all";
+        const student = window.store.getActiveStudent();
+        if (student) this.renderTasks(student);
+      });
+    });
 
     // 10. Sınav Türü Değişimi
     document.getElementById("examTypeSelect")?.addEventListener("change", (e) => {
@@ -478,6 +524,7 @@ class App {
     }
 
     this.renderStudentSelector();
+    this.renderYksCountdownAndMotivation();
     const student = window.store.getActiveStudent();
     if (!student) {
       this.renderEmptyState();
@@ -486,6 +533,7 @@ class App {
 
     this.renderHeroCard(student);
     this.renderKpis(student);
+    this.renderTasks(student);
     this.renderExamsTable(student);
     this.renderQuestionsTable(student);
     this.renderCourseAttendanceTable(student);
@@ -841,6 +889,8 @@ class App {
   renderHeroCard(student) {
     if (!student) return;
 
+    const heroBadges = document.getElementById("heroBadges");
+
     if (student.isAggregate) {
       document.getElementById("heroName").textContent = student.name;
       document.getElementById("heroField").textContent = "Tüm Alanlar";
@@ -855,6 +905,9 @@ class App {
       const avatar = document.getElementById("heroAvatar");
       avatar.style.background = "#0f172a";
       avatar.textContent = "👥";
+      if (heroBadges) {
+        heroBadges.innerHTML = `<span class="achievement-badge badge-blue">🏫 NFGL YKS Kadrosu</span><span class="achievement-badge badge-emerald">📊 Toplu Sınıf Analizi</span>`;
+      }
       return;
     }
 
@@ -873,6 +926,89 @@ class App {
     avatar.style.background = student.avatarColor || "#1d4ed8";
     const initials = student.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
     avatar.textContent = initials;
+
+    this.renderHeroBadges(student);
+  }
+
+  renderHeroBadges(student) {
+    const container = document.getElementById("heroBadges");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const exams = student.exams || [];
+    const tytExams = exams.filter(e => e.type === "TYT");
+    const aytExams = exams.filter(e => e.type === "AYT");
+    const maxTyt = tytExams.reduce((max, e) => Math.max(max, e.totalNet || 0), 0);
+    const maxAyt = aytExams.reduce((max, e) => Math.max(max, e.totalNet || 0), 0);
+
+    const questions = student.questionLogs || [];
+    const totalQuestions = questions.reduce((acc, q) => acc + (Number(q.count) || 0), 0);
+    const totalCorrect = questions.reduce((acc, q) => acc + (Number(q.correct) || 0), 0);
+    const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+    const attendances = student.courseAttendance || [];
+    const totalAbsentHours = attendances.reduce((acc, a) => acc + (Number(a.hours) || 0), 0);
+
+    const tasks = student.tasks || [];
+    const completedTasks = tasks.filter(t => t.completed).length;
+
+    const badges = [];
+
+    // TYT Başarı Rozeti
+    if (maxTyt >= 100) {
+      badges.push({ text: `🎯 100+ TYT Kulübü (${maxTyt} Net)`, cls: "badge-gold", title: "Öğrenci 100 net barajını aştı!" });
+    } else if (maxTyt >= 85) {
+      badges.push({ text: `🎯 TYT İleri Düzey (${maxTyt} Net)`, cls: "badge-purple", title: "Yüksek TYT net performansı" });
+    } else if (maxTyt >= 70) {
+      badges.push({ text: `🎯 TYT İstikrarlı (${maxTyt} Net)`, cls: "badge-blue", title: "İyi bir TYT temeli" });
+    }
+
+    // AYT Başarı Rozeti
+    if (maxAyt >= 70) {
+      badges.push({ text: `🚀 70+ AYT Kulübü (${maxAyt} Net)`, cls: "badge-gold", title: "Zirve AYT net performansı!" });
+    } else if (maxAyt >= 55) {
+      badges.push({ text: `🚀 AYT Yükselişte (${maxAyt} Net)`, cls: "badge-purple", title: "Güçlü AYT adayı" });
+    }
+
+    // Soru Çözüm Şampiyonluğu
+    if (totalQuestions >= 1000) {
+      badges.push({ text: `⚡ 1000+ Soru Şampiyonu (${totalQuestions})`, cls: "badge-emerald", title: "1000'den fazla soru çözüldü" });
+    } else if (totalQuestions >= 500) {
+      badges.push({ text: `⚡ 500+ Soru Avcısı (${totalQuestions})`, cls: "badge-blue", title: "500'den fazla soru çözüldü" });
+    }
+
+    // Doğruluk Oranı
+    if (totalQuestions >= 200 && accuracy >= 85) {
+      badges.push({ text: `⭐ %${accuracy} Yüksek İsabet`, cls: "badge-rose", title: "Çözülen sorularda %85 üzeri doğruluk" });
+    }
+
+    // Deneme Serisi
+    if (exams.length >= 4) {
+      badges.push({ text: `📚 ${exams.length} Deneme Serisi`, cls: "badge-purple", title: "Düzenli deneme takip disiplini" });
+    }
+
+    // Devamlılık
+    if (totalAbsentHours === 0 && (exams.length > 0 || questions.length > 0)) {
+      badges.push({ text: `🛡️ Tam Devamlılık`, cls: "badge-emerald", title: "Ders devamsızlığı bulunmuyor" });
+    }
+
+    // Görev Tamamlama
+    if (completedTasks >= 2) {
+      badges.push({ text: `✅ ${completedTasks} Görev Tamamlandı`, cls: "badge-blue", title: "Koçluk ödevlerini düzenli tamamlıyor" });
+    }
+
+    // Eğer hiç rozet şartı sağlanamadıysa hoş geldin rozeti
+    if (badges.length === 0) {
+      badges.push({ text: `🌱 YKS 2027 Hedef Yolcusu`, cls: "badge-blue", title: "Çalışma maratonuna kararlılıkla başladı" });
+    }
+
+    badges.forEach(b => {
+      const span = document.createElement("span");
+      span.className = `achievement-badge ${b.cls}`;
+      span.textContent = b.text;
+      span.title = b.title;
+      container.appendChild(span);
+    });
   }
 
   renderKpis(student) {
@@ -2339,6 +2475,265 @@ class App {
     this.showToast(editing ? "Koçluk seansı güncellendi!" : "Koçluk seansı kaydedildi!", "success");
   }
 
+  // --- YKS Geri Sayım ve Motivasyon Sözü ---
+  renderYksCountdownAndMotivation() {
+    const now = new Date();
+    const tytDate = new Date("2027-06-19T10:15:00");
+    const aytDate = new Date("2027-06-20T10:15:00");
+    const diffTyt = Math.max(0, Math.ceil((tytDate - now) / (1000 * 60 * 60 * 24)));
+    const diffAyt = Math.max(0, Math.ceil((aytDate - now) / (1000 * 60 * 60 * 24)));
+
+    const countdownEl = document.getElementById("yksCountdownText");
+    if (countdownEl) {
+      countdownEl.textContent = `TYT: ${diffTyt} Gün | AYT: ${diffAyt} Gün`;
+    }
+
+    const quoteEl = document.getElementById("motivationQuoteText");
+    if (quoteEl && this.quotesList && this.quotesList.length > 0) {
+      const idx = this.currentQuoteIndex % this.quotesList.length;
+      quoteEl.textContent = `"${this.quotesList[idx]}"`;
+    }
+  }
+
+  rotateMotivationQuote() {
+    if (!this.quotesList || this.quotesList.length === 0) return;
+    this.currentQuoteIndex = (this.currentQuoteIndex + 1) % this.quotesList.length;
+    const quoteEl = document.getElementById("motivationQuoteText");
+    if (quoteEl) {
+      quoteEl.style.opacity = "0";
+      setTimeout(() => {
+        quoteEl.textContent = `"${this.quotesList[this.currentQuoteIndex]}"`;
+        quoteEl.style.opacity = "1";
+      }, 150);
+    }
+  }
+
+  // --- Haftalık Koçluk Görevleri (To-Do List) ---
+  renderTasks(student) {
+    const container = document.getElementById("tasksListContainer");
+    const badge = document.getElementById("taskProgressBadge");
+    const bar = document.getElementById("taskProgressBarFill");
+    const countAllEl = document.getElementById("taskCountAll");
+    const countPendingEl = document.getElementById("taskCountPending");
+    const countCompletedEl = document.getElementById("taskCountCompleted");
+
+    if (!container) return;
+
+    if (!student || student.isAggregate) {
+      container.innerHTML = `<p style="text-align:center; padding:18px; color:var(--text-muted); font-size:13px;">${student && student.isAggregate ? "Görevler bireysel öğrenci bazlıdır. Lütfen listeden bir öğrenci seçiniz." : "Lütfen Sınıf ve Şube seçiniz."}</p>`;
+      if (badge) badge.textContent = "0/0 Tamamlandı (%0)";
+      if (bar) bar.style.width = "0%";
+      if (countAllEl) countAllEl.textContent = "0";
+      if (countPendingEl) countPendingEl.textContent = "0";
+      if (countCompletedEl) countCompletedEl.textContent = "0";
+      return;
+    }
+
+    const tasks = student.tasks || [];
+    const completedCount = tasks.filter(t => t.completed).length;
+    const pendingCount = tasks.length - completedCount;
+    const pct = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+    if (badge) badge.textContent = `${completedCount}/${tasks.length} Tamamlandı (%${pct})`;
+    if (bar) bar.style.width = `${pct}%`;
+    if (countAllEl) countAllEl.textContent = tasks.length;
+    if (countPendingEl) countPendingEl.textContent = pendingCount;
+    if (countCompletedEl) countCompletedEl.textContent = completedCount;
+
+    let filtered = tasks;
+    if (this.taskFilter === "pending") {
+      filtered = tasks.filter(t => !t.completed);
+    } else if (this.taskFilter === "completed") {
+      filtered = tasks.filter(t => t.completed);
+    }
+
+    if (filtered.length === 0) {
+      const msg = tasks.length === 0 
+        ? "Henüz tanımlı koçluk görevi bulunmuyor. Yukarıdaki '+ Yeni Görev Ata' butonundan ödev veya hedef ekleyebilirsiniz."
+        : (this.taskFilter === "completed" ? "Henüz tamamlanan görev bulunmuyor." : "Tüm görevler tamamlandı! Tebrikler! 🎉");
+      container.innerHTML = `<p style="text-align:center; padding:18px; color:var(--text-muted); font-size:13px;">${msg}</p>`;
+      return;
+    }
+
+    const role = window.store.getRole();
+    const canDelete = role === "admin" || role === "teacher";
+
+    container.innerHTML = filtered.map(t => {
+      const isCompleted = t.completed;
+      const todayStr = new Date().toISOString().split("T")[0];
+      let dueClass = "";
+      let dueLabel = t.dueDate ? ((typeof AnalyticsEngine !== "undefined" && AnalyticsEngine.formatDateTurkish) ? AnalyticsEngine.formatDateTurkish(t.dueDate) : t.dueDate) : "-";
+
+      if (!isCompleted && t.dueDate) {
+        if (t.dueDate < todayStr) {
+          dueClass = "overdue";
+          dueLabel += " (Gecikti)";
+        } else if (t.dueDate === todayStr) {
+          dueClass = "today";
+          dueLabel += " (Bugün Son)";
+        }
+      }
+
+      return `
+        <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${t.id}">
+          <div class="task-left">
+            <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked' : ''} data-task-toggle="${t.id}" title="${isCompleted ? 'Tamamlanmadı olarak işaretle' : 'Tamamlandı olarak işaretle'}">
+            <div class="task-content">
+              <div class="task-title">${t.title}</div>
+              <div class="task-meta">
+                <span class="badge badge-outline" style="font-size:10px; padding:1px 6px;">📂 ${t.category || 'Genel'}</span>
+                <span class="task-due-badge ${dueClass}">📅 ${dueLabel}</span>
+                ${t.assignedBy ? `<span>👤 ${t.assignedBy}</span>` : ''}
+                ${t.note ? `<span style="font-style:italic; color:#475569;">💬 "${t.note}"</span>` : ''}
+              </div>
+            </div>
+          </div>
+          ${canDelete ? `
+            <button class="btn btn-sm btn-secondary" data-task-delete="${t.id}" style="color:var(--danger); border-color:#fecaca; padding:4px 8px; font-size:11px;" title="Görevi Sil">
+              🗑️
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }).join("");
+
+    // Checkbox olayları
+    container.querySelectorAll("[data-task-toggle]").forEach(chk => {
+      chk.addEventListener("change", () => {
+        const taskId = chk.getAttribute("data-task-toggle");
+        window.store.toggleTask(student.id, taskId);
+        this.renderTasks(student);
+        this.renderHeroBadges(student);
+        this.showToast(chk.checked ? "Görev tamamlandı! Harika ilerleme!" : "Görev tamamlanmadı olarak güncellendi.", "info");
+      });
+    });
+
+    // Silme butonları
+    container.querySelectorAll("[data-task-delete]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const taskId = btn.getAttribute("data-task-delete");
+        const confirmed = await this.confirmDelete({
+          title: "Koçluk Görevini Sil",
+          message: "Bu görevi silmek istediğinize emin misiniz?"
+        });
+        if (confirmed) {
+          window.store.deleteTask(student.id, taskId);
+          this.renderTasks(student);
+          this.renderHeroBadges(student);
+          this.showToast("Görev silindi.", "info");
+        }
+      });
+    });
+  }
+
+  handleSaveTask() {
+    const student = window.store.getActiveStudent();
+    if (!student || student.isAggregate) {
+      alert("Lütfen önce görev atamak istediğiniz öğrenciyi seçiniz.");
+      return;
+    }
+
+    const title = document.getElementById("taskTitle").value.trim();
+    const dueDate = document.getElementById("taskDueDate").value;
+    const category = document.getElementById("taskCategory").value;
+    const note = document.getElementById("taskNote").value.trim();
+
+    if (!title || !dueDate) {
+      alert("Lütfen görev başlığı ve son teslim tarihini doldurunuz.");
+      return;
+    }
+
+    window.store.addTask(student.id, {
+      title,
+      dueDate,
+      category,
+      note
+    });
+
+    this.closeModal("modalTask");
+    document.getElementById("formTask").reset();
+    this.renderTasks(student);
+    this.renderHeroBadges(student);
+    this.showToast("Yeni koçluk görevi başarıyla atandı!", "success");
+  }
+
+  // --- Veri Yedekleme, Geri Yükleme ve Dışa Aktarma ---
+  downloadFile(filename, content, mimeType = "text/plain;charset=utf-8") {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  handleDownloadBackup() {
+    const jsonStr = window.store.getBackupJSON();
+    const dateStr = new Date().toISOString().split("T")[0];
+    const filename = `ngfl_kocluk_tam_yedek_${dateStr}.json`;
+    this.downloadFile(filename, jsonStr, "application/json;charset=utf-8");
+    this.showToast("Tam sistem yedeği (JSON) indirildi!", "success");
+  }
+
+  async handleRestoreBackup(file) {
+    if (!file) return;
+    const confirmed = await this.confirmDelete({
+      title: "Sistem Yedeğini Geri Yükle",
+      message: "Seçilen yedek dosyasındaki tüm veriler mevcut verilerin üzerine yazılacaktır. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?"
+    });
+    if (!confirmed) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      const res = window.store.restoreFromJSON(content);
+      if (res.success) {
+        this.closeModal("modalBackupRestore");
+        this.refreshAll();
+        this.showToast(res.message, "success");
+      } else {
+        alert(res.message);
+      }
+    };
+    reader.onerror = () => {
+      alert("Dosya okuma sırasında bir hata oluştu.");
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  handleExportExamsCSV() {
+    const student = window.store.getActiveStudent();
+    const targetId = (student && !student.isAggregate) ? student.id : null;
+    const csvContent = window.store.exportExamsCSV(targetId);
+    const dateStr = new Date().toISOString().split("T")[0];
+    const prefix = targetId ? `${student.name.replace(/\s+/g, '_')}_` : "tum_ogrenciler_";
+    const filename = `${prefix}deneme_sinavlari_${dateStr}.csv`;
+    this.downloadFile(filename, csvContent, "text/csv;charset=utf-8");
+    this.showToast("Deneme sınavları Excel CSV olarak indirildi!", "success");
+  }
+
+  handleExportQuestionsCSV() {
+    const student = window.store.getActiveStudent();
+    const targetId = (student && !student.isAggregate) ? student.id : null;
+    const csvContent = window.store.exportQuestionsCSV(targetId);
+    const dateStr = new Date().toISOString().split("T")[0];
+    const prefix = targetId ? `${student.name.replace(/\s+/g, '_')}_` : "tum_ogrenciler_";
+    const filename = `${prefix}soru_takip_${dateStr}.csv`;
+    this.downloadFile(filename, csvContent, "text/csv;charset=utf-8");
+    this.showToast("Soru takip verileri Excel CSV olarak indirildi!", "success");
+  }
+
+  handleExportStudentsCSV() {
+    const csvContent = window.store.exportStudentsCSV();
+    const dateStr = new Date().toISOString().split("T")[0];
+    const filename = `ngfl_ogrenci_listesi_${dateStr}.csv`;
+    this.downloadFile(filename, csvContent, "text/csv;charset=utf-8");
+    this.showToast("Öğrenci listesi Excel CSV olarak indirildi!", "success");
+  }
+
   // --- Silme İşlemleri ve Tailwind 2 Onay Modalı ---
   confirmDelete(titleOrOptions, messageText) {
     return new Promise((resolve) => {
@@ -2513,6 +2908,7 @@ class App {
       heroAvatar.textContent = "👤";
     }
     if (heroBadges) heroBadges.innerHTML = "";
+    this.renderTasks(null);
 
     // 2. Filtre Sayı Rozeti
     const countBadge = document.getElementById("filterStudentCountBadge");
