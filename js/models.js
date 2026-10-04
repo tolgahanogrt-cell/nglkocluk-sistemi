@@ -164,6 +164,12 @@ const INITIAL_DEMO_DATA = {
         { id: "cs-2", date: "2026-09-15", title: "2. Hafta TYT Deneme Değerlendirmesi", status: "Katıldı", studentMotivation: 9, summary: "Özdebir denemesi çözüldü, netler analiz edildi.", assignments: ["Geometri üçgenler fasikülü", "Fizik kuvvet ve hareket"] },
         { id: "cs-3", date: "2026-09-22", title: "3. Hafta Motivasyon ve AYT Girişi", status: "Katıldı", studentMotivation: 8.5, summary: "AYT çalışma takvimi oluşturuldu.", assignments: ["Limit TYT analizi", "Haftalık 1400 soru hedefi"] },
         { id: "cs-4", date: "2026-09-29", title: "4. Hafta Gelişim Raporu", status: "Katıldı", studentMotivation: 9, summary: "Zeynep son 3 haftada TYT'de belirgin yükseliş yakaladı.", assignments: ["Fizik elektrik ve manyetizma", "Günlük 30 paragraf + 20 problem"] }
+      ],
+      // Haftalık Koçluk Görevleri ve Hedefler
+      tasks: [
+        { id: "tsk-1", title: "Günlük 30 Paragraf & 20 Problem Çözümü", dueDate: "2026-10-10", category: "Türkçe / Paragraf", note: "Sabah saatlerinde kronometre ile çözülecek.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" },
+        { id: "tsk-2", title: "Fizik Elektrik ve Manyetizma Özet Formül Kağıdı", dueDate: "2026-10-08", category: "Fen Bilimleri", note: "AYT soru bankasından 2 test ile pekiştirilecek.", completed: true, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-02" },
+        { id: "tsk-3", title: "Özdebir TYT Deneme Analizi ve Yanlış Defteri", dueDate: "2026-10-12", category: "Deneme Analizi", note: "Tüm boş ve yanlış sorular branş öğretmenlerine sorulacak.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" }
       ]
     },
     {
@@ -263,6 +269,11 @@ const INITIAL_DEMO_DATA = {
       coachingSessions: [
         { id: "cs-201", date: "2026-09-09", title: "1. Hafta Tanışma ve Planlama", status: "Katıldı", studentMotivation: 8, summary: "12. sınıf YKS çalışma programı çıkarıldı.", assignments: ["Geometri başlangıç"] },
         { id: "cs-202", date: "2026-09-23", title: "2. Hafta Edebiyat Analizi", status: "Katıldı", studentMotivation: 8.5, summary: "Edebiyat netleri yüksek.", assignments: ["AYT Matematik türev"] }
+      ],
+      // Haftalık Koçluk Görevleri ve Hedefler
+      tasks: [
+        { id: "tsk-201", title: "Edebiyat Cumhuriyet Dönemi Yazar-Eser Eşleştirmesi", dueDate: "2026-10-11", category: "Sosyal Bilimler", note: "Hafıza kartları ile tekrar edilecek.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" },
+        { id: "tsk-202", title: "Matematik Fonksiyonlar ve Parabol 100 Soru", dueDate: "2026-10-09", category: "Matematik / Geometri", note: "Eksik formüller not edilecek.", completed: true, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-01" }
       ]
     },
     {
