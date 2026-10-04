@@ -729,7 +729,6 @@ class App {
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
             <button class="btn btn-primary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudent('${s.id}')">✏️ Düzenle</button>
             <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.openEditStudentCredentials('${s.id}')">🔑 Şifre</button>
-            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;" onclick="app.selectStudentFromTable('${s.id}')">Profili Aç</button>
             <button class="btn btn-danger btn-sm" style="padding:3px 9px;" onclick="app.deleteStudent('${s.id}')">Sil</button>
           </div>
         </td>
