@@ -12,6 +12,11 @@ class App {
     const authWrapper = document.getElementById("authWrapper");
     if (!window.store.isAuthenticated()) {
       if (authWrapper) authWrapper.classList.remove("hidden");
+      document.body.classList.remove("role-admin", "role-teacher", "role-student");
+      document.querySelectorAll(".page-container").forEach(page => page.classList.remove("active"));
+      this.currentTab = "dashboard";
+      const defaultPage = document.getElementById("page-dashboard");
+      if (defaultPage) defaultPage.classList.add("active");
       return;
     }
 
@@ -193,12 +198,25 @@ class App {
 
   handleLogout() {
     window.store.logout();
+    document.body.classList.remove("role-admin", "role-teacher", "role-student");
+    document.querySelectorAll(".page-container").forEach(page => page.classList.remove("active"));
+    this.currentTab = "dashboard";
+    const defaultPage = document.getElementById("page-dashboard");
+    if (defaultPage) defaultPage.classList.add("active");
     this.checkAuth();
     this.showToast("Oturum başarıyla kapatıldı.", "info");
   }
 
   // --- Sekme Yöneticisi ---
   switchTab(tabId) {
+    const currentRole = window.store.getRole();
+    if (tabId === "admin" && currentRole !== "admin") {
+      tabId = currentRole === "teacher" ? "students" : "dashboard";
+    }
+    if (tabId === "students" && currentRole === "student") {
+      tabId = "dashboard";
+    }
+
     this.currentTab = tabId;
 
     document.querySelectorAll(".sidebar-nav .nav-item").forEach(btn => {
