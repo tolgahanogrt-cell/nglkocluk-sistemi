@@ -120,6 +120,9 @@ class AppStore {
                 s.section = "A";
               }
             }
+            if (s.grade && s.grade.toLowerCase().includes("mezun")) {
+              s.grade = "12. Sınıf";
+            }
           });
         }
         return parsed;
@@ -228,11 +231,7 @@ class AppStore {
     return all.filter(s => {
       if (gradeFilter) {
         const sGrade = (s.grade || "").toLowerCase();
-        if (gradeFilter.toLowerCase() === "mezun") {
-          if (!sGrade.includes("mezun")) return false;
-        } else {
-          if (!sGrade.includes(gradeFilter.toLowerCase())) return false;
-        }
+        if (!sGrade.includes(gradeFilter.toLowerCase())) return false;
       }
       if (sectionFilter) {
         const sSec = s.section || (s.grade && s.grade.includes("-") ? s.grade.split("-")[1].trim() : "");
@@ -249,7 +248,7 @@ class AppStore {
     const students = this.getFilteredStudents(gradeFilter, sectionFilter);
     const count = students.length;
 
-    let gradeLabel = gradeFilter ? (gradeFilter === "Mezun" ? "Mezun" : `${gradeFilter}. Sınıf`) : "Tüm Sınıflar";
+    let gradeLabel = gradeFilter ? `${gradeFilter}. Sınıf` : "Tüm Sınıflar";
     let sectionLabel = sectionFilter ? `${sectionFilter} Şubesi` : "Tüm Şubeler";
     let title = `Tüm Öğrenciler (${gradeLabel} - ${sectionLabel})`;
 
