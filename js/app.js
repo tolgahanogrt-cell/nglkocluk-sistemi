@@ -1171,7 +1171,7 @@ class App {
       return;
     }
 
-    exams.forEach(ex => {
+    filteredExams.forEach(ex => {
       let subjectSummary = "";
       if (ex.type === "TYT" && ex.tyt) {
         subjectSummary = `Tr: ${ex.tyt.turkce?.net || 0} | Mat: ${ex.tyt.matematik?.net || 0} | Sos: ${ex.tyt.sosyal?.net || 0} | Fen: ${ex.tyt.fen?.net || 0}`;
