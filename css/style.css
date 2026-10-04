@@ -1461,5 +1461,492 @@ body.role-student .student-only:not(.page-container):not(.nav-item):not(.btn) {
   border-color: var(--primary);
 }
 
+/* =========================================================
+   MOBİL VE TABLET UYUMLULUK SİSTEMİ (RESPONSIVE DESIGN)
+   ========================================================= */
+
+/* Varsayılan Masaüstü Buton Durumları */
+.mobile-menu-btn {
+  display: none;
+}
+
+.mobile-only-btn {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 1. TABLET VE KÜÇÜK EKRANLAR (< 1024px) */
+@media (max-width: 1023px) {
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-menu-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--primary);
+  }
+
+  .mobile-only-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    border: none;
+    font-size: 22px;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    margin-left: auto;
+  }
+
+  .mobile-only-btn:hover {
+    background: #e2e8f0;
+    color: var(--danger);
+  }
+
+  /* Sidebar Mobil Çekmece (Drawer) */
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: -300px !important;
+    width: 280px !important;
+    max-width: 85vw !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-open {
+    left: 0 !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+
+  .sidebar-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .app-layout {
+    flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .main-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Topbar Düzeni */
+  .topbar {
+    height: auto !important;
+    min-height: 64px !important;
+    padding: 12px 18px !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* Grafikler */
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* 2. AKILLI TELEFONLAR (< 768px) */
+@media (max-width: 768px) {
+  /* Sayfa genel boşlukları */
+  .page-container {
+    padding: 12px 12px 28px !important;
+  }
+
+  /* Topbar Telefondaki Düzeni */
+  .topbar {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+  }
+
+  .topbar-left {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .topbar .page-info h1 {
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+  }
+
+  .topbar .page-info p {
+    display: none !important;
+  }
+
+  .yks-countdown-badge {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 6px 12px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .topbar-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+    gap: 6px !important;
+  }
+
+  .topbar-actions .btn {
+    flex-shrink: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Öğrenci Hero Kartı */
+  .student-hero-card {
+    padding: 14px 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  .student-hero-profile {
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .student-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 16px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .student-hero-details h2 {
+    font-size: 15px !important;
+  }
+
+  .student-hero-target {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Günün Motivasyon Bannerı */
+  .motivation-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .motivation-banner #btnNewQuote {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Dashboard Filtre Barı */
+  .teacher-and-admin-only .card-body > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .teacher-and-admin-only .card-body > div > div:last-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .teacher-and-admin-only .card-body select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .kpi-card {
+    padding: 12px 10px !important;
+  }
+
+  .kpi-val {
+    font-size: 18px !important;
+  }
+
+  .kpi-title {
+    font-size: 10px !important;
+  }
+
+  .kpi-footer {
+    font-size: 10.5px !important;
+  }
+
+  /* Haftalık Görevler */
+  #cardWeeklyTasks .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  #cardWeeklyTasks .card-header > div:last-child {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .task-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .task-left {
+    align-items: flex-start !important;
+  }
+
+  .task-title {
+    font-size: 12.5px !important;
+  }
+
+  /* Soru Takip Branş Kartları */
+  .subject-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .subject-summary-card {
+    padding: 8px 10px !important;
+  }
+
+  .subject-card-name {
+    font-size: 11.5px !important;
+    max-width: 85px !important;
+  }
+
+  .subject-card-count {
+    font-size: 16px !important;
+  }
+
+  /* Kart Başlıkları ve Filtre Kontrolleri */
+  .card-header {
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .card-header > div {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .card-body {
+    padding: 12px 14px !important;
+  }
+
+  /* Grafik Alanları */
+  .chart-wrapper {
+    height: 220px !important;
+  }
+
+  /* Tablolar ve Yatay Kaydırma */
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: var(--radius-sm);
+  }
+
+  .data-table {
+    min-width: 580px !important;
+  }
+
+  .data-table th, .data-table td {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Modallar Telefondan Kolay Kullanım */
+  .modal-overlay {
+    padding: 8px !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-box {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92vh !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+
+  .modal-body {
+    padding: 14px 14px !important;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+
+  .modal-footer .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 14px !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .form-group.col-span-2 {
+    grid-column: span 1 !important;
+  }
+
+  .form-grid-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .form-grid-3 .form-input {
+    padding: 6px 4px !important;
+    font-size: 11px !important;
+    text-align: center !important;
+  }
+
+  /* Öğrenci Karnesi Mobil Tasarımı */
+  .karne-document {
+    padding: 16px 12px !important;
+  }
+
+  .karne-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 10px !important;
+  }
+
+  .karne-title-area h2 {
+    font-size: 16px !important;
+  }
+
+  .karne-meta-box {
+    text-align: center !important;
+  }
+
+  .karne-profile-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .karne-table th, .karne-table td {
+    padding: 5px 4px !important;
+    font-size: 10.5px !important;
+  }
+
+  .karne-signature-area {
+    flex-direction: column !important;
+    gap: 20px !important;
+    align-items: center !important;
+  }
+
+  /* Auth Kartı */
+  .auth-card {
+    margin: 8px !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .auth-header {
+    padding: 20px 16px 14px !important;
+  }
+
+  .auth-title {
+    font-size: 17px !important;
+  }
+
+  .auth-subtitle {
+    font-size: 12px !important;
+  }
+
+  .auth-body {
+    padding: 18px 16px !important;
+  }
+}
+
+/* 3. ÇOK KÜÇÜK EKRANLAR (< 380px) */
+@media (max-width: 380px) {
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .subject-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .karne-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 
 
