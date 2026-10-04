@@ -59,11 +59,24 @@ class AnalyticsEngine {
       const clean = String(dateStr).split("T")[0].trim();
       const parts = clean.split("-");
       if (parts.length === 3 && parts[0].length === 4) {
-        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        const dd = String(parts[2]).padStart(2, "0");
+        const mm = String(parts[1]).padStart(2, "0");
+        const yyyy = parts[0];
+        return `${dd}.${mm}.${yyyy}`;
       }
       const dotParts = clean.split(".");
-      if (dotParts.length === 3 && dotParts[2].length === 4) {
-        return clean;
+      if (dotParts.length === 3) {
+        const dd = String(dotParts[0]).padStart(2, "0");
+        const mm = String(dotParts[1]).padStart(2, "0");
+        const yyyy = dotParts[2].length === 4 ? dotParts[2] : (dotParts[0].length === 4 ? dotParts[0] : dotParts[2]);
+        return `${dd}.${mm}.${yyyy}`;
+      }
+      const slashParts = clean.split("/");
+      if (slashParts.length === 3) {
+        const dd = String(slashParts[0]).padStart(2, "0");
+        const mm = String(slashParts[1]).padStart(2, "0");
+        const yyyy = slashParts[2].length === 4 ? slashParts[2] : slashParts[0];
+        return `${dd}.${mm}.${yyyy}`;
       }
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
