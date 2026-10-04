@@ -153,6 +153,22 @@ class AppStore {
             if (s.grade && s.grade.toLowerCase().includes("mezun")) {
               s.grade = "12. Sınıf";
             }
+            if (!Array.isArray(s.tasks) || s.tasks.length === 0) {
+              if (s.id === "std-1" || (s.name && s.name.includes("Zeynep"))) {
+                s.tasks = [
+                  { id: "tsk-1", title: "Günlük 30 Paragraf & 20 Problem Çözümü", dueDate: "2026-10-10", category: "Türkçe / Paragraf", note: "Sabah saatlerinde kronometre ile çözülecek.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" },
+                  { id: "tsk-2", title: "Fizik Elektrik ve Manyetizma Özet Formül Kağıdı", dueDate: "2026-10-08", category: "Fen Bilimleri", note: "AYT soru bankasından 2 test ile pekiştirilecek.", completed: true, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-02" },
+                  { id: "tsk-3", title: "Özdebir TYT Deneme Analizi ve Yanlış Defteri", dueDate: "2026-10-12", category: "Deneme Analizi", note: "Tüm boş ve yanlış sorular branş öğretmenlerine sorulacak.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" }
+                ];
+              } else if (s.id === "std-2" || (s.name && s.name.includes("Emir"))) {
+                s.tasks = [
+                  { id: "tsk-201", title: "Edebiyat Cumhuriyet Dönemi Yazar-Eser Eşleştirmesi", dueDate: "2026-10-11", category: "Sosyal Bilimler", note: "Hafıza kartları ile tekrar edilecek.", completed: false, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-04" },
+                  { id: "tsk-202", title: "Matematik Fonksiyonlar ve Parabol 100 Soru", dueDate: "2026-10-09", category: "Matematik / Geometri", note: "Eksik formüller not edilecek.", completed: true, assignedBy: "Tolga Öğretmen", createdAt: "2026-10-01" }
+                ];
+              } else {
+                s.tasks = s.tasks || [];
+              }
+            }
           });
         }
         return parsed;
@@ -648,6 +664,215 @@ class AppStore {
     student[collection][idx] = { ...newData, id: recordId };
     this.saveToStorage();
     return student[collection][idx];
+  }
+
+  // --- Koçluk Görevleri ve Hedefler (To-Do List) ---
+  getTasks(studentId) {
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    return student && Array.isArray(student.tasks) ? student.tasks : [];
+  }
+
+  addTask(studentId, taskData) {
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    if (!student) return null;
+    if (!Array.isArray(student.tasks)) student.tasks = [];
+
+    const newTask = {
+      id: "tsk-" + Date.now(),
+      title: (taskData.title || "").trim(),
+      dueDate: taskData.dueDate || new Date().toISOString().split("T")[0],
+      category: taskData.category || "Genel Hedef",
+      note: (taskData.note || "").trim(),
+      completed: false,
+      assignedBy: taskData.assignedBy || (this.currentUser ? this.currentUser.name : "Koç Öğretmen"),
+      createdAt: new Date().toISOString().split("T")[0]
+    };
+    student.tasks.unshift(newTask);
+    this.saveToStorage();
+    return newTask;
+  }
+
+  toggleTask(studentId, taskId) {
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    if (!student || !Array.isArray(student.tasks)) return null;
+    const task = student.tasks.find(t => t.id === taskId);
+    if (task) {
+      task.completed = !task.completed;
+      this.saveToStorage();
+      return task;
+    }
+    return null;
+  }
+
+  deleteTask(studentId, taskId) {
+    const student = (this.data.students || []).find(s => s.id === studentId);
+    if (!student || !Array.isArray(student.tasks)) return;
+    student.tasks = student.tasks.filter(t => t.id !== taskId);
+    this.saveToStorage();
+  }
+
+  // --- Veri Yedekleme ve Geri Yükleme ---
+  getBackupJSON() {
+    return JSON.stringify({
+      appName: "Nafi Güral Fen Lisesi Öğrenci Koçluk ve Başarı Takip Portalı",
+      version: "5.4",
+      exportDate: new Date().toISOString(),
+      exportedBy: this.currentUser ? `${this.currentUser.name} (${this.authRole})` : "Sistem",
+      data: this.data
+    }, null, 2);
+  }
+
+  restoreFromJSON(jsonString) {
+    try {
+      const parsed = JSON.parse(jsonString);
+      const backupData = parsed.data || parsed;
+      if (!backupData || !Array.isArray(backupData.students) || !Array.isArray(backupData.teachers)) {
+        return { success: false, message: "Geçersiz yedek dosyası! Öğrenci veya öğretmen listesi bulunamadı." };
+      }
+      this.data = backupData;
+      this.saveToStorage();
+      return { success: true, message: "Sistem verileri ve tüm kayıtlar başarıyla geri yüklendi!" };
+    } catch (e) {
+      return { success: false, message: "Yedek dosyası okunamadı: " + e.message };
+    }
+  }
+
+  // --- Excel Uyumlu CSV Dışa Aktarma (UTF-8 BOM + Noktalı Virgül ;) ---
+  exportExamsCSV(targetStudentId = null) {
+    let students = this.data.students || [];
+    if (targetStudentId) {
+      students = students.filter(s => s.id === targetStudentId);
+    }
+
+    const headers = [
+      "Öğrenci Adı", "Sınıf", "Şube", "Alan", "Sınav Türü", "Sınav Adı", "Tarih",
+      "Zorluk", "Türkçe Net", "Matematik Net", "Sosyal Net", "Fen Net",
+      "Toplam Net", "Tahmini Puan", "Koç Notu"
+    ];
+
+    const rows = [headers.join(";")];
+
+    students.forEach(s => {
+      (s.exams || []).forEach(e => {
+        let turkce = "", mat = "", sos = "", fen = "";
+        if (e.type === "TYT" && e.tyt) {
+          turkce = e.tyt.turkce ? e.tyt.turkce.net : "";
+          mat = e.tyt.matematik ? e.tyt.matematik.net : "";
+          sos = e.tyt.sosyal ? e.tyt.sosyal.net : "";
+          fen = e.tyt.fen ? e.tyt.fen.net : "";
+        } else if (e.type === "AYT" && e.ayt) {
+          mat = e.ayt.matematik ? e.ayt.matematik.net : "";
+          if (s.field === "Sayısal") {
+            fen = `Fizik: ${e.ayt.fizik ? e.ayt.fizik.net : 0}, Kimya: ${e.ayt.kimya ? e.ayt.kimya.net : 0}, Biyoloji: ${e.ayt.biyoloji ? e.ayt.biyoloji.net : 0}`;
+          } else {
+            sos = `Edebiyat: ${e.ayt.edebiyat ? e.ayt.edebiyat.net : 0}, Tarih: ${e.ayt.tarih ? e.ayt.tarih.net : 0}, Coğrafya: ${e.ayt.cografya ? e.ayt.cografya.net : 0}`;
+          }
+        }
+
+        const dateStr = (typeof AnalyticsEngine !== "undefined" && AnalyticsEngine.formatDateTurkish) ? AnalyticsEngine.formatDateTurkish(e.date) : e.date;
+        const row = [
+          `"${s.name}"`,
+          `"${s.grade || ''}"`,
+          `"${s.section || ''}"`,
+          `"${s.field || ''}"`,
+          `"${e.type}"`,
+          `"${(e.name || '').replace(/"/g, '""')}"`,
+          `"${dateStr}"`,
+          e.difficulty || "-",
+          turkce,
+          mat,
+          `"${sos}"`,
+          `"${fen}"`,
+          e.totalNet !== undefined ? e.totalNet : "",
+          e.estimatedScore !== undefined ? e.estimatedScore : "",
+          `"${(e.notes || '').replace(/"/g, '""')}"`
+        ];
+        rows.push(row.join(";"));
+      });
+    });
+
+    return "\uFEFF" + rows.join("\r\n");
+  }
+
+  exportQuestionsCSV(targetStudentId = null) {
+    let students = this.data.students || [];
+    if (targetStudentId) {
+      students = students.filter(s => s.id === targetStudentId);
+    }
+
+    const headers = [
+      "Öğrenci Adı", "Sınıf", "Şube", "Tarih", "Ders", "Soru Sayısı",
+      "Doğru", "Yanlış", "Boş", "Net", "Çözüm Süresi (Dk)", "Başarı Oranı (%)"
+    ];
+
+    const rows = [headers.join(";")];
+
+    students.forEach(s => {
+      (s.questionLogs || []).forEach(l => {
+        const correct = Number(l.correct) || 0;
+        const wrong = Number(l.wrong) || 0;
+        const total = Number(l.count) || 0;
+        const empty = Math.max(0, total - (correct + wrong));
+        const net = Math.max(0, (correct - (wrong / 4))).toFixed(2);
+        const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+        const dateStr = (typeof AnalyticsEngine !== "undefined" && AnalyticsEngine.formatDateTurkish) ? AnalyticsEngine.formatDateTurkish(l.date) : l.date;
+
+        const row = [
+          `"${s.name}"`,
+          `"${s.grade || ''}"`,
+          `"${s.section || ''}"`,
+          `"${dateStr}"`,
+          `"${(l.subject || '').replace(/"/g, '""')}"`,
+          total,
+          correct,
+          wrong,
+          empty,
+          net,
+          l.duration || 0,
+          `%${acc}`
+        ];
+        rows.push(row.join(";"));
+      });
+    });
+
+    return "\uFEFF" + rows.join("\r\n");
+  }
+
+  exportStudentsCSV() {
+    const students = this.data.students || [];
+    const headers = [
+      "Öğrenci Adı", "Kullanıcı Adı", "Şifre", "Sınıf", "Şube", "Alan",
+      "Hedef Üniversite", "Hedef Bölüm", "Hedef TYT Net", "Hedef AYT Net",
+      "Haftalık Soru Kotası", "Toplam Deneme Sayısı", "Toplam Çözülen Soru", "Kayıt Tarihi"
+    ];
+
+    const rows = [headers.join(";")];
+
+    students.forEach(s => {
+      const examCount = (s.exams || []).length;
+      const questionCount = (s.questionLogs || []).reduce((acc, q) => acc + (Number(q.count) || 0), 0);
+      const dateStr = (typeof AnalyticsEngine !== "undefined" && AnalyticsEngine.formatDateTurkish) ? AnalyticsEngine.formatDateTurkish(s.createdAt) : s.createdAt;
+
+      const row = [
+        `"${s.name}"`,
+        `"${s.username}"`,
+        `"${s.password}"`,
+        `"${s.grade || ''}"`,
+        `"${s.section || ''}"`,
+        `"${s.field || ''}"`,
+        `"${(s.targetUniversity || '').replace(/"/g, '""')}"`,
+        `"${(s.targetDepartment || '').replace(/"/g, '""')}"`,
+        s.targetTytNet || 0,
+        s.targetAytNet || 0,
+        s.targetWeeklyQuestions || 0,
+        examCount,
+        questionCount,
+        `"${dateStr || ''}"`
+      ];
+      rows.push(row.join(";"));
+    });
+
+    return "\uFEFF" + rows.join("\r\n");
   }
 }
 
